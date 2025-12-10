@@ -470,5 +470,139 @@ export async function registerRoutes(
     searchHandler("pan", "id", req, res);
   });
 
+  // Vehicle Challan Search API
+  const VEHICLE_API_BASE = "https://osint-apis.zerovault.workers.dev";
+  const VEHICLE_API_KEY = "prateek";
+
+  app.get("/api/search/vehicle-challan", requireAuth, searchLimiter, detectVPN, async (req: Request, res: Response) => {
+    try {
+      const vehicleNumber = sanitizeString(req.query.query as string);
+      if (!vehicleNumber) {
+        return res.status(400).json({ success: false, error: "There are some problem please contact developer" });
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+
+      const apiUrl = `${VEHICLE_API_BASE}/?api_key=${VEHICLE_API_KEY}&service=challan&vehicle_number=${encodeURIComponent(vehicleNumber)}`;
+      
+      const response = await fetch(apiUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "SecurePortal/1.0",
+          "Accept": "application/json",
+        },
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        console.error(`Vehicle challan API error: ${response.status}`);
+        return res.status(200).json({ success: true, data: null, message: "There are some problem please contact developer" });
+      }
+
+      const rawData = await response.json();
+      
+      // Filter out metadata/credits - only keep vehicle-related data
+      // Explicitly exclude: metadata, api_by, channel, telegram, api_input, api_output, api_credit
+      const filteredData: any = {};
+      if (rawData.challan && rawData.challan.status === 200) {
+        filteredData.challan = rawData.challan;
+      }
+      if (rawData.vehicle_number) {
+        filteredData.vehicle_number = rawData.vehicle_number;
+      }
+      // Do NOT include: metadata, timestamp, api_by, channel, telegram info, api_input, api_output, api_credit
+
+      // If no valid data found, return generic error
+      if (!filteredData.challan) {
+        return res.status(200).json({ success: true, data: null, message: "There are some problem please contact developer" });
+      }
+
+      const user = req.session?.user;
+      if (user) {
+        await SearchHistory.create({
+          userId: user.id,
+          userType: user.role,
+          searchType: "vehicle_challan",
+          searchQuery: vehicleNumber,
+          resultCount: filteredData.challan?.data?.data?.length || 0,
+        });
+      }
+
+      return res.json({ success: true, data: filteredData });
+    } catch (error: any) {
+      console.error("Vehicle challan search error:", error.message);
+      return res.status(200).json({ success: true, data: null, message: "There are some problem please contact developer" });
+    }
+  });
+
+  // Vehicle Info Search API
+  app.get("/api/search/vehicle-info", requireAuth, searchLimiter, detectVPN, async (req: Request, res: Response) => {
+    try {
+      const vehicleNumber = sanitizeString(req.query.query as string);
+      if (!vehicleNumber) {
+        return res.status(400).json({ success: false, error: "There are some problem please contact developer" });
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
+
+      const apiUrl = `${VEHICLE_API_BASE}/?api_key=${VEHICLE_API_KEY}&service=vehicle-puc&vehicle_number=${encodeURIComponent(vehicleNumber)}`;
+      
+      const response = await fetch(apiUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "SecurePortal/1.0",
+          "Accept": "application/json",
+        },
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        console.error(`Vehicle info API error: ${response.status}`);
+        return res.status(200).json({ success: true, data: null, message: "There are some problem please contact developer" });
+      }
+
+      const rawData = await response.json();
+      
+      // Filter out metadata/credits - only keep vehicle-related data
+      // Explicitly exclude: metadata, api_by, channel, telegram, api_input, api_output, api_credit, timestamp
+      const filteredData: any = {};
+      if (rawData.vehicle && rawData.vehicle.status === 200) {
+        filteredData.vehicle = rawData.vehicle;
+      }
+      if (rawData.puc && rawData.puc.status === 200) {
+        filteredData.puc = rawData.puc;
+      }
+      if (rawData.vehicle_number) {
+        filteredData.vehicle_number = rawData.vehicle_number;
+      }
+      // Do NOT include: metadata, timestamp, api_by, channel, telegram info, api_input, api_output, api_credit
+
+      // If no valid vehicle data found, return generic error
+      if (!filteredData.vehicle) {
+        return res.status(200).json({ success: true, data: null, message: "There are some problem please contact developer" });
+      }
+
+      const user = req.session?.user;
+      if (user) {
+        await SearchHistory.create({
+          userId: user.id,
+          userType: user.role,
+          searchType: "vehicle_info",
+          searchQuery: vehicleNumber,
+          resultCount: filteredData.vehicle ? 1 : 0,
+        });
+      }
+
+      return res.json({ success: true, data: filteredData });
+    } catch (error: any) {
+      console.error("Vehicle info search error:", error.message);
+      return res.status(200).json({ success: true, data: null, message: "There are some problem please contact developer" });
+    }
+  });
+
   return httpServer;
 }

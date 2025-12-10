@@ -24,6 +24,8 @@ import {
   Mail,
   CreditCard,
   LayoutDashboard,
+  Car,
+  FileWarning,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -39,12 +41,16 @@ export function AppSidebar() {
         { title: "Email Search", url: "/owner?search=email", searchType: "email", icon: Mail },
         { title: "Aadhar Search", url: "/owner?search=aadhar", searchType: "aadhar", icon: CreditCard },
         { title: "PAN Search", url: "/owner?search=pan", searchType: "pan", icon: CreditCard },
+        { title: "Vehicle Info", url: "/owner?search=vehicle-info", searchType: "vehicle-info", icon: Car },
+        { title: "Vehicle Challan", url: "/owner?search=vehicle-challan", searchType: "vehicle-challan", icon: FileWarning },
       ]
     : [
         { title: "Mobile Search", url: "/dashboard?search=mobile", searchType: "mobile", icon: Phone },
         { title: "Email Search", url: "/dashboard?search=email", searchType: "email", icon: Mail },
         { title: "Aadhar Search", url: "/dashboard?search=aadhar", searchType: "aadhar", icon: CreditCard },
         { title: "PAN Search", url: "/dashboard?search=pan", searchType: "pan", icon: CreditCard },
+        { title: "Vehicle Info", url: "/dashboard?search=vehicle-info", searchType: "vehicle-info", icon: Car },
+        { title: "Vehicle Challan", url: "/dashboard?search=vehicle-challan", searchType: "vehicle-challan", icon: FileWarning },
       ];
 
   const ownerItems = [

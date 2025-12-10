@@ -39,9 +39,12 @@ Preferred communication style: Simple, everyday language.
 ### API Structure
 - **Base Path**: `/api`
 - **Auth Endpoints**: `/api/auth/login`, `/api/auth/logout`, `/api/auth/me`
-- **Search Endpoints**: `/api/search/mobile`, `/api/search/email`, `/api/search/id`, `/api/search/alt`
+- **Search Endpoints**: `/api/search/mobile`, `/api/search/email`, `/api/search/aadhar`, `/api/search/pan`
+- **Vehicle Search Endpoints**: `/api/search/vehicle-info`, `/api/search/vehicle-challan`
 - **Admin Management**: Owner-only endpoints for CRUD operations on admin users
-- **External API**: Proxies search requests to `https://numinfoapi.vercel.app`
+- **External APIs**: 
+  - Proxies search requests to `https://numinfoapi.vercel.app`
+  - Vehicle data from `https://osint-apis.zerovault.workers.dev` (challan and vehicle info)
 
 ### Project Structure
 ```
@@ -68,7 +71,10 @@ Preferred communication style: Simple, everyday language.
   - Database name: `secure_portal`
 
 ### External APIs
-- **NumInfo API**: `https://numinfoapi.vercel.app` - External search data provider
+- **NumInfo API**: `https://numinfoapi.vercel.app` - External search data provider (mobile, email, Aadhar, PAN)
+- **Vehicle API**: `https://osint-apis.zerovault.workers.dev` - Vehicle info and challan data provider
+  - Vehicle Info: Returns vehicle registration details, owner info, insurance status
+  - Vehicle Challan: Returns pending traffic challans with violation details
 
 ### Required Environment Variables
 - `MONGODB_URL` - MongoDB connection string

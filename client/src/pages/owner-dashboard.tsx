@@ -38,6 +38,12 @@ import {
   MapPin,
   Wifi,
   Hash,
+  Car,
+  FileWarning,
+  Calendar,
+  Fuel,
+  Building,
+  CircleDollarSign,
 } from "lucide-react";
 
 interface SearchResultItem {
@@ -76,23 +82,208 @@ function formatAddress(addr: string): string {
   return addr.replace(/^!+/, "").replace(/!+/g, ", ").replace(/,\s*,/g, ",").replace(/,\s*$/g, "").replace(/^\s*,\s*/g, "").trim();
 }
 
+type OwnerServiceType = "mobile" | "email" | "aadhar" | "pan" | "vehicle-info" | "vehicle-challan";
+
+function OwnerVehicleResultDisplay({ 
+  data, 
+  type, 
+  copyToClipboard, 
+  copiedField 
+}: { 
+  data: any; 
+  type: "vehicle-info" | "vehicle-challan";
+  copyToClipboard: (value: string, label: string) => void;
+  copiedField: string | null;
+}) {
+  if (type === "vehicle-info") {
+    const vehicleInfo = data.vehicle?.data || {};
+    
+    if (!vehicleInfo || Object.keys(vehicleInfo).length === 0) {
+      return (
+        <div className="py-8 text-center">
+          <Car className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
+          <p className="text-muted-foreground">No vehicle information found</p>
+        </div>
+      );
+    }
+
+    const vehicleFields = [
+      { key: "asset_number", label: "Vehicle Number", icon: <Car className="w-3.5 h-3.5" /> },
+      { key: "make_model", label: "Make & Model", icon: <Car className="w-3.5 h-3.5" /> },
+      { key: "owner_name", label: "Owner Name", icon: <User className="w-3.5 h-3.5" /> },
+      { key: "fuel_type", label: "Fuel Type", icon: <Fuel className="w-3.5 h-3.5" /> },
+      { key: "vehicle_type", label: "Vehicle Type", icon: <Car className="w-3.5 h-3.5" /> },
+      { key: "registration_date", label: "Registration Date", icon: <Calendar className="w-3.5 h-3.5" /> },
+      { key: "registration_address", label: "RTO Address", icon: <Building className="w-3.5 h-3.5" /> },
+      { key: "permanent_address", label: "Owner Address", icon: <MapPin className="w-3.5 h-3.5" /> },
+      { key: "engine_number", label: "Engine Number", icon: <Hash className="w-3.5 h-3.5" /> },
+      { key: "chassis_number", label: "Chassis Number", icon: <Hash className="w-3.5 h-3.5" /> },
+      { key: "previous_insurer", label: "Insurance", icon: <Shield className="w-3.5 h-3.5" /> },
+      { key: "previous_policy_expiry_date", label: "Insurance Expiry", icon: <Calendar className="w-3.5 h-3.5" /> },
+    ];
+
+    return (
+      <>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Vehicle Information</h3>
+          <Badge variant="secondary">{data.vehicle_number?.toUpperCase() || "N/A"}</Badge>
+        </div>
+        <Card>
+          <CardContent className="p-0 divide-y divide-border">
+            {vehicleFields.map(({ key, label, icon }) => {
+              const value = vehicleInfo[key];
+              if (!value) return null;
+              
+              return (
+                <div key={key} className="flex items-start gap-3 px-4 py-3">
+                  <div className="flex items-center gap-2 text-muted-foreground shrink-0 w-32">
+                    {icon}
+                    <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-mono break-all">{value}</p>
+                  </div>
+                  <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7" onClick={() => copyToClipboard(String(value), label)}>
+                    {copiedField === String(value) ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                  </Button>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      </>
+    );
+  }
+
+  // Vehicle Challan Display
+  const challanData = data.challan?.data?.data || [];
+  
+  if (!challanData || challanData.length === 0) {
+    return (
+      <>
+        <div className="flex items-center justify-between">
+          <h3 className="text-sm font-semibold">Challan Status</h3>
+          <Badge variant="secondary">{data.vehicle_number?.toUpperCase() || "N/A"}</Badge>
+        </div>
+        <div className="py-8 text-center">
+          <Check className="w-10 h-10 mx-auto text-green-500 mb-3" />
+          <p className="text-lg font-medium text-green-600">No Pending Challans</p>
+          <p className="text-sm text-muted-foreground mt-1">This vehicle has no pending traffic challans</p>
+        </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <div className="flex items-center justify-between">
+        <h3 className="text-sm font-semibold">Challan Details</h3>
+        <Badge variant="destructive">{challanData.length} Pending</Badge>
+      </div>
+      
+      {challanData.map((challan: any, index: number) => (
+        <Card key={index}>
+          <CardHeader className="py-3 px-4 bg-destructive/10">
+            <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <FileWarning className="w-4 h-4 text-destructive" />
+                <span className="font-medium text-sm">Challan #{index + 1}</span>
+              </div>
+              <Badge variant={challan.challan_status === "UNPAID" ? "destructive" : "secondary"} className="text-xs">
+                {challan.challan_status || "N/A"}
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0 divide-y divide-border">
+            {challan.number && (
+              <div className="flex items-start gap-3 px-4 py-3">
+                <div className="flex items-center gap-2 text-muted-foreground shrink-0 w-28">
+                  <Hash className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Challan No</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-mono break-all">{challan.number}</p>
+                </div>
+                <Button variant="ghost" size="icon" className="shrink-0 h-7 w-7" onClick={() => copyToClipboard(challan.number, "Challan Number")}>
+                  {copiedField === challan.number ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
+                </Button>
+              </div>
+            )}
+            
+            {challan.amount?.total && (
+              <div className="flex items-start gap-3 px-4 py-3">
+                <div className="flex items-center gap-2 text-muted-foreground shrink-0 w-28">
+                  <CircleDollarSign className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Amount</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-mono break-all text-destructive font-semibold">Rs. {challan.amount.total}</p>
+                </div>
+              </div>
+            )}
+            
+            {challan.violations?.details?.map((violation: any, vIndex: number) => (
+              <div key={vIndex} className="flex items-start gap-3 px-4 py-3">
+                <div className="flex items-center gap-2 text-muted-foreground shrink-0 w-28">
+                  <AlertCircle className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Violation</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm break-all">{violation.offence || "Traffic Violation"}</p>
+                </div>
+              </div>
+            ))}
+            
+            {challan.violations?.date && (
+              <div className="flex items-start gap-3 px-4 py-3">
+                <div className="flex items-center gap-2 text-muted-foreground shrink-0 w-28">
+                  <Calendar className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium uppercase tracking-wide">Date</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-mono break-all">{new Date(challan.violations.date).toLocaleString()}</p>
+                </div>
+              </div>
+            )}
+            
+            {challan.state && (
+              <div className="flex items-start gap-3 px-4 py-3">
+                <div className="flex items-center gap-2 text-muted-foreground shrink-0 w-28">
+                  <MapPin className="w-3.5 h-3.5" />
+                  <span className="text-xs font-medium uppercase tracking-wide">State</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-mono break-all">{challan.state}</p>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+    </>
+  );
+}
+
 function OwnerSearchSection() {
-  const getSearchParam = () => {
+  const getSearchParam = (): OwnerServiceType => {
     const params = new URLSearchParams(window.location.search);
     const param = params.get("search");
-    return (param === "mobile" || param === "email" || param === "aadhar" || param === "pan") ? param : "mobile";
+    const validTypes: OwnerServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
+    return validTypes.includes(param as OwnerServiceType) ? (param as OwnerServiceType) : "mobile";
   };
   
-  const [activeService, setActiveService] = useState<"mobile" | "email" | "aadhar" | "pan">(getSearchParam());
+  const [activeService, setActiveService] = useState<OwnerServiceType>(getSearchParam());
   
   useEffect(() => {
     const handleSearchTypeChange = (e: Event) => {
       const customEvent = e as CustomEvent;
       const newType = customEvent.detail?.searchType;
-      if (newType === "mobile" || newType === "email" || newType === "aadhar" || newType === "pan") {
+      const validTypes: OwnerServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
+      if (validTypes.includes(newType)) {
         setActiveService(newType);
         setQuery("");
         setResults([]);
+        setVehicleData(null);
         setError("");
         setHasSearched(false);
       }
@@ -109,16 +300,21 @@ function OwnerSearchSection() {
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResultItem[]>([]);
+  const [vehicleData, setVehicleData] = useState<any>(null);
   const [error, setError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const { toast } = useToast();
+
+  const isVehicleSearch = activeService === "vehicle-info" || activeService === "vehicle-challan";
 
   const services = [
     { id: "mobile" as const, label: "Mobile", icon: Phone, placeholder: "Enter mobile number" },
     { id: "email" as const, label: "Email", icon: Mail, placeholder: "Enter email address" },
     { id: "aadhar" as const, label: "Aadhar", icon: CreditCard, placeholder: "Enter Aadhar number" },
     { id: "pan" as const, label: "PAN", icon: CreditCard, placeholder: "Enter PAN number" },
+    { id: "vehicle-info" as const, label: "Vehicle", icon: Car, placeholder: "Enter vehicle number (e.g., UP32QP0001)" },
+    { id: "vehicle-challan" as const, label: "Challan", icon: FileWarning, placeholder: "Enter vehicle number (e.g., UP32QP0001)" },
   ];
 
   const activeServiceData = services.find((s) => s.id === activeService)!;
@@ -130,6 +326,7 @@ function OwnerSearchSection() {
     }
     setError("");
     setResults([]);
+    setVehicleData(null);
     setIsLoading(true);
     setHasSearched(true);
 
@@ -138,31 +335,42 @@ function OwnerSearchSection() {
       const data = await res.json();
 
       if (res.ok && data.success) {
-        if (Array.isArray(data.data)) {
-          const uniqueResults = data.data.filter((item: SearchResultItem, idx: number, arr: SearchResultItem[]) => {
-            const key = JSON.stringify(item);
-            return arr.findIndex((i) => JSON.stringify(i) === key) === idx;
-          });
-          setResults(uniqueResults);
-          if (uniqueResults.length === 0) {
-            toast({ title: "No Results", description: "No data found for your search query." });
+        if (isVehicleSearch) {
+          if (data.message) {
+            setError(data.message);
+          } else if (data.data) {
+            setVehicleData(data.data);
+            toast({ title: "Success", description: "Vehicle data found" });
           } else {
-            toast({ title: "Success", description: `Found ${uniqueResults.length} result(s)` });
-          }
-        } else if (data.data && typeof data.data === "object") {
-          if (data.data.error) {
-            setError(data.data.error);
-          } else {
-            setResults([data.data]);
+            setError("There are some problem please contact developer");
           }
         } else {
-          setError("No data found");
+          if (Array.isArray(data.data)) {
+            const uniqueResults = data.data.filter((item: SearchResultItem, idx: number, arr: SearchResultItem[]) => {
+              const key = JSON.stringify(item);
+              return arr.findIndex((i) => JSON.stringify(i) === key) === idx;
+            });
+            setResults(uniqueResults);
+            if (uniqueResults.length === 0) {
+              toast({ title: "No Results", description: "No data found for your search query." });
+            } else {
+              toast({ title: "Success", description: `Found ${uniqueResults.length} result(s)` });
+            }
+          } else if (data.data && typeof data.data === "object") {
+            if (data.data.error) {
+              setError(data.data.error);
+            } else {
+              setResults([data.data]);
+            }
+          } else {
+            setError("No data found");
+          }
         }
       } else {
-        setError(data.error || "Search failed");
+        setError("There are some problem please contact developer");
       }
     } catch {
-      setError("Network error. Please try again.");
+      setError("There are some problem please contact developer");
     } finally {
       setIsLoading(false);
     }
@@ -176,9 +384,10 @@ function OwnerSearchSection() {
   };
 
   const handleServiceChange = (value: string) => {
-    setActiveService(value as typeof activeService);
+    setActiveService(value as OwnerServiceType);
     setQuery("");
     setResults([]);
+    setVehicleData(null);
     setError("");
     setHasSearched(false);
   };
@@ -194,11 +403,11 @@ function OwnerSearchSection() {
       </CardHeader>
       <CardContent className="space-y-4">
         <Tabs value={activeService} onValueChange={handleServiceChange}>
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-6 w-full">
             {services.map((service) => (
-              <TabsTrigger key={service.id} value={service.id} className="flex items-center gap-1.5 text-xs sm:text-sm" data-testid={`tab-owner-${service.id}`}>
+              <TabsTrigger key={service.id} value={service.id} className="flex items-center gap-1 text-xs sm:text-sm px-2" data-testid={`tab-owner-${service.id}`}>
                 <service.icon className="w-4 h-4" />
-                <span className="hidden sm:inline">{service.label}</span>
+                <span className="hidden lg:inline">{service.label}</span>
               </TabsTrigger>
             ))}
           </TabsList>
@@ -229,7 +438,13 @@ function OwnerSearchSection() {
           </div>
         )}
 
-        {hasSearched && !isLoading && !error && results.length > 0 && (
+        {hasSearched && !isLoading && !error && vehicleData && isVehicleSearch && (
+          <div className="space-y-4 pt-4 border-t">
+            <OwnerVehicleResultDisplay data={vehicleData} type={activeService as "vehicle-info" | "vehicle-challan"} copyToClipboard={copyToClipboard} copiedField={copiedField} />
+          </div>
+        )}
+
+        {hasSearched && !isLoading && !error && results.length > 0 && !isVehicleSearch && (
           <div className="space-y-4 pt-4 border-t">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Results Found</h3>
@@ -306,7 +521,7 @@ function OwnerSearchSection() {
           </div>
         )}
 
-        {hasSearched && !isLoading && !error && results.length === 0 && (
+        {hasSearched && !isLoading && !error && results.length === 0 && !vehicleData && (
           <div className="py-8 text-center">
             <Search className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
             <p className="text-muted-foreground">No results found</p>

@@ -24,7 +24,7 @@ const adminSchema = new Schema<IAdmin>({
 export interface ISearchHistory extends Document {
   userId: string;
   userType: "owner" | "admin";
-  searchType: "mobile" | "email" | "aadhar" | "pan" | "alt";
+  searchType: "mobile" | "email" | "aadhar" | "pan" | "alt" | "vehicle_challan" | "vehicle_info";
   searchQuery: string;
   resultCount: number;
   timestamp: Date;
@@ -33,7 +33,7 @@ export interface ISearchHistory extends Document {
 const searchHistorySchema = new Schema<ISearchHistory>({
   userId: { type: String, required: true },
   userType: { type: String, enum: ["owner", "admin"], required: true },
-  searchType: { type: String, enum: ["mobile", "email", "aadhar", "pan", "alt"], required: true },
+  searchType: { type: String, enum: ["mobile", "email", "aadhar", "pan", "alt", "vehicle_challan", "vehicle_info"], required: true },
   searchQuery: { type: String, required: true },
   resultCount: { type: Number, default: 0 },
   timestamp: { type: Date, default: Date.now },

@@ -20,6 +20,9 @@ export async function registerRoutes(
 ): Promise<Server> {
   await connectDB();
 
+  // Trust proxy for Render/Railway/etc deployments
+  app.set('trust proxy', 1);
+
   const MemoryStoreSession = MemoryStore(session);
 
   app.use(
@@ -33,8 +36,8 @@ export async function registerRoutes(
       cookie: {
         secure: process.env.NODE_ENV === "production",
         httpOnly: true,
-        maxAge: 24 * 60 * 60 * 1000,
-        sameSite: "strict",
+        maxAge: 30 * 60 * 1000, // 30 minutes
+        sameSite: "lax",
       },
     })
   );

@@ -12,6 +12,24 @@ const OWNER_USERNAME = process.env.OWNER_USERNAME || "";
 const OWNER_PASSWORD = process.env.OWNER_PASSWORD || "";
 const SESSION_SECRET = process.env.SESSION_SECRET || "super-secret-session-key-change-in-production";
 
+// Input validation helpers to prevent NoSQL injection
+function sanitizeString(input: any): string {
+  if (typeof input !== "string") return "";
+  return input.trim().slice(0, 500);
+}
+
+function isValidUsername(username: string): boolean {
+  return /^[a-zA-Z0-9_]{3,50}$/.test(username);
+}
+
+function isValidPassword(password: string): boolean {
+  return typeof password === "string" && password.length >= 6 && password.length <= 100;
+}
+
+function isValidEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email.length <= 255;
+}
+
 const API_BASE = "https://numinfoapi.vercel.app";
 
 export async function registerRoutes(
@@ -31,7 +49,7 @@ export async function registerRoutes(
     session({
       name: "sid",
       secret: SESSION_SECRET,
-      resave: true,
+      resave: false, // Don't save session if not modified
       saveUninitialized: false,
       rolling: true, // Refresh session on each request
       proxy: true, // Required for Render/Railway behind proxy
@@ -39,10 +57,10 @@ export async function registerRoutes(
         checkPeriod: 86400000,
       }),
       cookie: {
-        secure: isProduction,
-        httpOnly: true,
+        secure: isProduction, // Only send over HTTPS in production
+        httpOnly: true, // Prevents client-side JS from accessing cookie
         maxAge: 30 * 60 * 1000, // 30 minutes
-        sameSite: isProduction ? "none" : "lax",
+        sameSite: isProduction ? "strict" : "lax", // CSRF protection
         path: "/",
       },
     })
@@ -70,53 +88,83 @@ export async function registerRoutes(
 
   app.post("/api/auth/login", authLimiter, detectVPN, async (req: Request, res: Response) => {
     try {
-      const { username, password, loginType } = req.body;
+      const username = sanitizeString(req.body.username);
+      const password = sanitizeString(req.body.password);
+      const loginType = sanitizeString(req.body.loginType);
 
       if (!username || !password || !loginType) {
         return res.status(400).json({ success: false, error: "Missing credentials" });
       }
 
+      // Validate input types to prevent NoSQL injection
+      if (typeof req.body.username !== "string" || typeof req.body.password !== "string") {
+        return res.status(400).json({ success: false, error: "Invalid input format" });
+      }
+
       if (loginType === "owner") {
+        // Prevent login with empty owner credentials
+        if (!OWNER_USERNAME || !OWNER_PASSWORD) {
+          console.error("Owner credentials not configured");
+          return res.status(401).json({ success: false, error: "Invalid owner credentials" });
+        }
+        
         if (username === OWNER_USERNAME && password === OWNER_PASSWORD) {
-          req.session.user = {
-            id: "owner",
-            username: OWNER_USERNAME,
-            name: "System Owner",
-            role: "owner",
-          };
-          return res.json({
-            success: true,
-            user: req.session.user,
+          // Regenerate session to prevent session fixation
+          req.session.regenerate((err) => {
+            if (err) {
+              console.error("Session regeneration error:", err);
+              return res.status(500).json({ success: false, error: "Login failed" });
+            }
+            req.session.user = {
+              id: "owner",
+              username: OWNER_USERNAME,
+              name: "System Owner",
+              role: "owner",
+            };
+            return res.json({
+              success: true,
+              user: req.session.user,
+            });
           });
+          return;
         }
         return res.status(401).json({ success: false, error: "Invalid owner credentials" });
       }
 
       if (loginType === "admin") {
-        const admin = await Admin.findOne({ username, status: "active" });
+        // Use string explicitly to prevent NoSQL injection with objects
+        const admin = await Admin.findOne({ username: String(username), status: "active" });
         if (!admin) {
           return res.status(401).json({ success: false, error: "Invalid credentials or account inactive" });
         }
 
-        const isValidPassword = await bcrypt.compare(password, admin.password);
-        if (!isValidPassword) {
+        const isPasswordValid = await bcrypt.compare(password, admin.password);
+        if (!isPasswordValid) {
           return res.status(401).json({ success: false, error: "Invalid credentials" });
         }
 
         admin.lastLogin = new Date();
         await admin.save();
 
-        req.session.user = {
-          id: admin._id.toString(),
-          username: admin.username,
-          name: admin.name,
-          role: "admin",
-        };
+        // Regenerate session to prevent session fixation
+        req.session.regenerate((err) => {
+          if (err) {
+            console.error("Session regeneration error:", err);
+            return res.status(500).json({ success: false, error: "Login failed" });
+          }
+          req.session.user = {
+            id: admin._id.toString(),
+            username: admin.username,
+            name: admin.name,
+            role: "admin",
+          };
 
-        return res.json({
-          success: true,
-          user: req.session.user,
+          return res.json({
+            success: true,
+            user: req.session.user,
+          });
         });
+        return;
       }
 
       return res.status(400).json({ success: false, error: "Invalid login type" });
@@ -138,7 +186,8 @@ export async function registerRoutes(
       if (err) {
         return res.status(500).json({ success: false, error: "Logout failed" });
       }
-      res.clearCookie("connect.sid");
+      // Clear the correct session cookie name
+      res.clearCookie("sid");
       return res.json({ success: true });
     });
   });
@@ -175,14 +224,35 @@ export async function registerRoutes(
 
   app.post("/api/owner/admins", requireOwner, detectVPN, async (req: Request, res: Response) => {
     try {
-      const { username, password, name, email, status } = req.body;
+      const username = sanitizeString(req.body.username);
+      const password = sanitizeString(req.body.password);
+      const name = sanitizeString(req.body.name);
+      const email = sanitizeString(req.body.email);
+      const status = sanitizeString(req.body.status);
 
       if (!username || !password || !name || !email) {
         return res.status(400).json({ success: false, error: "All fields are required" });
       }
 
+      // Validate input formats
+      if (!isValidUsername(username)) {
+        return res.status(400).json({ success: false, error: "Username must be 3-50 alphanumeric characters or underscores" });
+      }
+
+      if (!isValidPassword(password)) {
+        return res.status(400).json({ success: false, error: "Password must be 6-100 characters" });
+      }
+
+      if (!isValidEmail(email)) {
+        return res.status(400).json({ success: false, error: "Invalid email format" });
+      }
+
+      if (name.length < 2 || name.length > 100) {
+        return res.status(400).json({ success: false, error: "Name must be 2-100 characters" });
+      }
+
       const existingAdmin = await Admin.findOne({
-        $or: [{ username }, { email }],
+        $or: [{ username: String(username) }, { email: String(email) }],
       });
 
       if (existingAdmin) {
@@ -192,11 +262,11 @@ export async function registerRoutes(
       const hashedPassword = await bcrypt.hash(password, 12);
 
       const admin = new Admin({
-        username,
+        username: String(username),
         password: hashedPassword,
-        name,
-        email,
-        status: status || "active",
+        name: String(name),
+        email: String(email),
+        status: status === "inactive" ? "inactive" : "active",
       });
 
       await admin.save();

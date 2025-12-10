@@ -54,8 +54,10 @@ export function AppSidebar() {
     await logout();
   };
 
-  const handleSearchClick = (url: string) => {
+  const handleSearchClick = (url: string, searchType: string) => {
     navigate(url);
+    // Dispatch custom event to notify dashboards of search type change
+    window.dispatchEvent(new CustomEvent('searchTypeChange', { detail: { searchType } }));
     if (isMobile) {
       setOpenMobile(false);
     }
@@ -120,7 +122,7 @@ export function AppSidebar() {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       isActive={isActive}
-                      onClick={() => handleSearchClick(item.url)}
+                      onClick={() => handleSearchClick(item.url, item.searchType)}
                       data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                     >
                       <item.icon className="w-4 h-4" />

@@ -37,12 +37,14 @@ export function AppSidebar() {
     ? [
         { title: "Mobile Search", url: "/owner?search=mobile", searchType: "mobile", icon: Phone },
         { title: "Email Search", url: "/owner?search=email", searchType: "email", icon: Mail },
-        { title: "ID Search", url: "/owner?search=id", searchType: "id", icon: CreditCard },
+        { title: "Aadhar Search", url: "/owner?search=aadhar", searchType: "aadhar", icon: CreditCard },
+        { title: "PAN Search", url: "/owner?search=pan", searchType: "pan", icon: CreditCard },
       ]
     : [
         { title: "Mobile Search", url: "/dashboard?search=mobile", searchType: "mobile", icon: Phone },
         { title: "Email Search", url: "/dashboard?search=email", searchType: "email", icon: Mail },
-        { title: "ID Search", url: "/dashboard?search=id", searchType: "id", icon: CreditCard },
+        { title: "Aadhar Search", url: "/dashboard?search=aadhar", searchType: "aadhar", icon: CreditCard },
+        { title: "PAN Search", url: "/dashboard?search=pan", searchType: "pan", icon: CreditCard },
       ];
 
   const ownerItems = [

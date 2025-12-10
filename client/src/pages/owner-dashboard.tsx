@@ -80,16 +80,16 @@ function OwnerSearchSection() {
   const getSearchParam = () => {
     const params = new URLSearchParams(window.location.search);
     const param = params.get("search");
-    return (param === "mobile" || param === "email" || param === "id") ? param : "mobile";
+    return (param === "mobile" || param === "email" || param === "aadhar" || param === "pan") ? param : "mobile";
   };
   
-  const [activeService, setActiveService] = useState<"mobile" | "email" | "id">(getSearchParam());
+  const [activeService, setActiveService] = useState<"mobile" | "email" | "aadhar" | "pan">(getSearchParam());
   
   useEffect(() => {
     const handleSearchTypeChange = (e: Event) => {
       const customEvent = e as CustomEvent;
       const newType = customEvent.detail?.searchType;
-      if (newType === "mobile" || newType === "email" || newType === "id") {
+      if (newType === "mobile" || newType === "email" || newType === "aadhar" || newType === "pan") {
         setActiveService(newType);
         setQuery("");
         setResults([]);
@@ -117,7 +117,8 @@ function OwnerSearchSection() {
   const services = [
     { id: "mobile" as const, label: "Mobile", icon: Phone, placeholder: "Enter mobile number" },
     { id: "email" as const, label: "Email", icon: Mail, placeholder: "Enter email address" },
-    { id: "id" as const, label: "ID", icon: CreditCard, placeholder: "Enter ID (Aadhar/PAN)" },
+    { id: "aadhar" as const, label: "Aadhar", icon: CreditCard, placeholder: "Enter Aadhar number" },
+    { id: "pan" as const, label: "PAN", icon: CreditCard, placeholder: "Enter PAN number" },
   ];
 
   const activeServiceData = services.find((s) => s.id === activeService)!;
@@ -193,7 +194,7 @@ function OwnerSearchSection() {
       </CardHeader>
       <CardContent className="space-y-4">
         <Tabs value={activeService} onValueChange={handleServiceChange}>
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-4 w-full">
             {services.map((service) => (
               <TabsTrigger key={service.id} value={service.id} className="flex items-center gap-1.5 text-xs sm:text-sm" data-testid={`tab-owner-${service.id}`}>
                 <service.icon className="w-4 h-4" />

@@ -7,7 +7,7 @@ import { Loader2, Search, Copy, Check, AlertCircle, Phone, Mail, CreditCard, Sma
 import { useToast } from "@/hooks/use-toast";
 
 interface SearchCardProps {
-  type: "mobile" | "email" | "id" | "alt";
+  type: "mobile" | "email" | "aadhar" | "pan" | "alt";
   title: string;
   description: string;
   placeholder: string;
@@ -16,7 +16,8 @@ interface SearchCardProps {
 const iconMap = {
   mobile: Phone,
   email: Mail,
-  id: CreditCard,
+  aadhar: CreditCard,
+  pan: CreditCard,
   alt: Smartphone,
 };
 

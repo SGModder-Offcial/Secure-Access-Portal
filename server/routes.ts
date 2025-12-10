@@ -392,8 +392,12 @@ export async function registerRoutes(
     searchHandler("email", "email", req, res);
   });
 
-  app.get("/api/search/id", requireAuth, searchLimiter, detectVPN, (req, res) => {
-    searchHandler("id", "id", req, res);
+  app.get("/api/search/aadhar", requireAuth, searchLimiter, detectVPN, (req, res) => {
+    searchHandler("aadhar", "id", req, res);
+  });
+
+  app.get("/api/search/pan", requireAuth, searchLimiter, detectVPN, (req, res) => {
+    searchHandler("pan", "id", req, res);
   });
 
   return httpServer;

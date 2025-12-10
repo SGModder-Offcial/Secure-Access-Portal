@@ -156,10 +156,10 @@ export function DashboardHome() {
   const getSearchParam = () => {
     const params = new URLSearchParams(window.location.search);
     const param = params.get("search");
-    return (param === "mobile" || param === "email" || param === "id") ? param : "mobile";
+    return (param === "mobile" || param === "email" || param === "aadhar" || param === "pan") ? param : "mobile";
   };
   
-  const [activeService, setActiveService] = useState<"mobile" | "email" | "id">(getSearchParam());
+  const [activeService, setActiveService] = useState<"mobile" | "email" | "aadhar" | "pan">(getSearchParam());
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResultItem[]>([]);
@@ -171,7 +171,7 @@ export function DashboardHome() {
     const handleSearchTypeChange = (e: Event) => {
       const customEvent = e as CustomEvent;
       const newType = customEvent.detail?.searchType;
-      if (newType === "mobile" || newType === "email" || newType === "id") {
+      if (newType === "mobile" || newType === "email" || newType === "aadhar" || newType === "pan") {
         setActiveService(newType);
         setQuery("");
         setResults([]);
@@ -192,7 +192,8 @@ export function DashboardHome() {
   const services = [
     { id: "mobile" as const, label: "Mobile", icon: Phone, placeholder: "Enter mobile number (e.g., 9161570798)" },
     { id: "email" as const, label: "Email", icon: Mail, placeholder: "Enter email address" },
-    { id: "id" as const, label: "ID", icon: CreditCard, placeholder: "Enter ID (e.g., XBY0099416)" },
+    { id: "aadhar" as const, label: "Aadhar", icon: CreditCard, placeholder: "Enter Aadhar number (e.g., 123456789012)" },
+    { id: "pan" as const, label: "PAN", icon: CreditCard, placeholder: "Enter PAN number (e.g., ABCDE1234F)" },
   ];
 
   const activeServiceData = services.find((s) => s.id === activeService)!;
@@ -300,7 +301,7 @@ export function DashboardHome() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <Tabs value={activeService} onValueChange={handleServiceChange}>
-                    <TabsList className="grid grid-cols-3 w-full">
+                    <TabsList className="grid grid-cols-4 w-full">
                       {services.map((service) => (
                         <TabsTrigger
                           key={service.id}

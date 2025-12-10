@@ -31,11 +31,17 @@ export function AppSidebar() {
 
   const isOwner = user?.role === "owner";
 
-  const searchItems = [
-    { title: "Mobile Search", url: "/dashboard/mobile", icon: Phone },
-    { title: "Email Search", url: "/dashboard/email", icon: Mail },
-    { title: "ID Search", url: "/dashboard/id", icon: CreditCard },
-  ];
+  const searchItems = isOwner
+    ? [
+        { title: "Mobile Search", url: "/owner?search=mobile", icon: Phone },
+        { title: "Email Search", url: "/owner?search=email", icon: Mail },
+        { title: "ID Search", url: "/owner?search=id", icon: CreditCard },
+      ]
+    : [
+        { title: "Mobile Search", url: "/dashboard/mobile", icon: Phone },
+        { title: "Email Search", url: "/dashboard/email", icon: Mail },
+        { title: "ID Search", url: "/dashboard/id", icon: CreditCard },
+      ];
 
   const ownerItems = [
     { title: "Dashboard", url: "/owner", icon: LayoutDashboard },
@@ -99,19 +105,24 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {searchItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton
-                    asChild
-                    isActive={location === item.url}
-                  >
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+              {searchItems.map((item) => {
+                const isActive = isOwner 
+                  ? window.location.search.includes(`search=${item.url.split('=')[1]}`)
+                  : location === item.url;
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton
+                      asChild
+                      isActive={isActive}
+                    >
+                      <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>

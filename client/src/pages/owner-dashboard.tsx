@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -76,7 +77,20 @@ function formatAddress(addr: string): string {
 }
 
 function OwnerSearchSection() {
-  const [activeService, setActiveService] = useState<"mobile" | "email" | "id">("mobile");
+  const [location] = useLocation();
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchParam = urlParams.get("search");
+  const initialService = (searchParam === "mobile" || searchParam === "email" || searchParam === "id") ? searchParam : "mobile";
+  
+  const [activeService, setActiveService] = useState<"mobile" | "email" | "id">(initialService);
+  
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const param = params.get("search");
+    if (param === "mobile" || param === "email" || param === "id") {
+      setActiveService(param);
+    }
+  }, [location]);
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResultItem[]>([]);
@@ -337,48 +351,48 @@ export function OwnerDashboard() {
 
   return (
     <OwnerLayout title="Owner Dashboard" subtitle="System overview and management">
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Admins</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
+      <div className="space-y-4">
+        <div className="grid grid-cols-3 gap-2 sm:gap-4">
+          <Card className="p-3 sm:p-0">
+            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 p-0 sm:p-4 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Total Admins</CardTitle>
+              <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0 pt-1 sm:p-4 sm:pt-0">
               {isLoading ? (
-                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-6 w-10 sm:h-8 sm:w-16" />
               ) : (
-                <div className="text-2xl font-bold" data-testid="text-total-admins">
+                <div className="text-lg sm:text-2xl font-bold" data-testid="text-total-admins">
                   {stats?.totalAdmins || 0}
                 </div>
               )}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Active Admins</CardTitle>
-              <UserCheck className="h-4 w-4 text-green-500" />
+          <Card className="p-3 sm:p-0">
+            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 p-0 sm:p-4 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Active Admins</CardTitle>
+              <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0 pt-1 sm:p-4 sm:pt-0">
               {isLoading ? (
-                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-6 w-10 sm:h-8 sm:w-16" />
               ) : (
-                <div className="text-2xl font-bold" data-testid="text-active-admins">
+                <div className="text-lg sm:text-2xl font-bold" data-testid="text-active-admins">
                   {stats?.activeAdmins || 0}
                 </div>
               )}
             </CardContent>
           </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Recent Searches</CardTitle>
-              <Search className="h-4 w-4 text-muted-foreground" />
+          <Card className="p-3 sm:p-0">
+            <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 p-0 sm:p-4 sm:pb-2">
+              <CardTitle className="text-xs sm:text-sm font-medium">Searches</CardTitle>
+              <Search className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
+            <CardContent className="p-0 pt-1 sm:p-4 sm:pt-0">
               {isLoading ? (
-                <Skeleton className="h-8 w-16" />
+                <Skeleton className="h-6 w-10 sm:h-8 sm:w-16" />
               ) : (
-                <div className="text-2xl font-bold" data-testid="text-recent-searches">
+                <div className="text-lg sm:text-2xl font-bold" data-testid="text-recent-searches">
                   {stats?.recentSearches || 0}
                 </div>
               )}

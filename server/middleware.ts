@@ -16,10 +16,16 @@ const ALLOWED_ORIGINS = [
   "https://secure-access-portal.onrender.com",
   "http://localhost:5000",
   "http://0.0.0.0:5000",
+  "https://localhost",
 ];
 
 // Block direct API access from other domains/tools
 export function apiProtection(req: Request, res: Response, next: NextFunction) {
+  // Only apply protection to API routes
+  if (!req.path.startsWith("/api/")) {
+    return next();
+  }
+  
   const origin = req.headers.origin;
   const referer = req.headers.referer;
   
@@ -43,7 +49,10 @@ export function apiProtection(req: Request, res: Response, next: NextFunction) {
   
   // Check origin if present
   if (origin) {
-    const isAllowed = ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed) || origin.includes("replit.dev"));
+    const isAllowed = ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed)) || 
+                      origin.includes("replit.dev") || 
+                      origin.includes("replit.app") ||
+                      origin.includes("repl.co");
     if (!isAllowed) {
       return res.status(403).json({
         success: false,
@@ -55,7 +64,10 @@ export function apiProtection(req: Request, res: Response, next: NextFunction) {
   
   // Check referer if present
   if (referer) {
-    const isAllowed = ALLOWED_ORIGINS.some(allowed => referer.startsWith(allowed) || referer.includes("replit.dev"));
+    const isAllowed = ALLOWED_ORIGINS.some(allowed => referer.startsWith(allowed)) || 
+                      referer.includes("replit.dev") || 
+                      referer.includes("replit.app") ||
+                      referer.includes("repl.co");
     if (!isAllowed) {
       return res.status(403).json({
         success: false,
@@ -66,7 +78,13 @@ export function apiProtection(req: Request, res: Response, next: NextFunction) {
   }
   
   // Add CORS headers for allowed origins
-  if (origin && ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed) || origin.includes("replit.dev"))) {
+  const isOriginAllowed = origin && (
+    ALLOWED_ORIGINS.some(allowed => origin.startsWith(allowed)) || 
+    origin.includes("replit.dev") || 
+    origin.includes("replit.app") ||
+    origin.includes("repl.co")
+  );
+  if (isOriginAllowed) {
     res.setHeader("Access-Control-Allow-Origin", origin);
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS");

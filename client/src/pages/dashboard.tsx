@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -153,13 +154,26 @@ function ResultCard({ result, index }: { result: SearchResultItem; index: number
 }
 
 export function DashboardHome() {
-  const [activeService, setActiveService] = useState<"mobile" | "email" | "id">("mobile");
+  const [location] = useLocation();
+  const urlParams = new URLSearchParams(window.location.search);
+  const searchParam = urlParams.get("search");
+  const initialService = (searchParam === "mobile" || searchParam === "email" || searchParam === "id") ? searchParam : "mobile";
+  
+  const [activeService, setActiveService] = useState<"mobile" | "email" | "id">(initialService);
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [error, setError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const param = params.get("search");
+    if (param === "mobile" || param === "email" || param === "id") {
+      setActiveService(param);
+    }
+  }, [location]);
 
   const services = [
     { id: "mobile" as const, label: "Mobile", icon: Phone, placeholder: "Enter mobile number (e.g., 9161570798)" },

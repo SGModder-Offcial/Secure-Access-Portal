@@ -11,6 +11,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,20 +28,21 @@ import {
 
 export function AppSidebar() {
   const { user, logout } = useAuth();
-  const [location] = useLocation();
+  const [location, navigate] = useLocation();
+  const { setOpenMobile, isMobile } = useSidebar();
 
   const isOwner = user?.role === "owner";
 
   const searchItems = isOwner
     ? [
-        { title: "Mobile Search", url: "/owner?search=mobile", icon: Phone },
-        { title: "Email Search", url: "/owner?search=email", icon: Mail },
-        { title: "ID Search", url: "/owner?search=id", icon: CreditCard },
+        { title: "Mobile Search", url: "/owner?search=mobile", searchType: "mobile", icon: Phone },
+        { title: "Email Search", url: "/owner?search=email", searchType: "email", icon: Mail },
+        { title: "ID Search", url: "/owner?search=id", searchType: "id", icon: CreditCard },
       ]
     : [
-        { title: "Mobile Search", url: "/dashboard/mobile", icon: Phone },
-        { title: "Email Search", url: "/dashboard/email", icon: Mail },
-        { title: "ID Search", url: "/dashboard/id", icon: CreditCard },
+        { title: "Mobile Search", url: "/dashboard?search=mobile", searchType: "mobile", icon: Phone },
+        { title: "Email Search", url: "/dashboard?search=email", searchType: "email", icon: Mail },
+        { title: "ID Search", url: "/dashboard?search=id", searchType: "id", icon: CreditCard },
       ];
 
   const ownerItems = [
@@ -50,6 +52,13 @@ export function AppSidebar() {
 
   const handleLogout = async () => {
     await logout();
+  };
+
+  const handleSearchClick = (url: string) => {
+    navigate(url);
+    if (isMobile) {
+      setOpenMobile(false);
+    }
   };
 
   return (
@@ -106,19 +115,16 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {searchItems.map((item) => {
-                const isActive = isOwner 
-                  ? window.location.search.includes(`search=${item.url.split('=')[1]}`)
-                  : location === item.url;
+                const isActive = window.location.search.includes(`search=${item.searchType}`);
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
-                      asChild
                       isActive={isActive}
+                      onClick={() => handleSearchClick(item.url)}
+                      data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
                     >
-                      <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}>
-                        <item.icon className="w-4 h-4" />
-                        <span>{item.title}</span>
-                      </Link>
+                      <item.icon className="w-4 h-4" />
+                      <span>{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

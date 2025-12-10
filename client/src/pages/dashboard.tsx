@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { useToast } from "@/hooks/use-toast";
@@ -561,21 +562,26 @@ export function DashboardHome() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Tabs value={activeService} onValueChange={handleServiceChange}>
-                    <TabsList className="grid grid-cols-6 w-full">
+                  <Select value={activeService} onValueChange={handleServiceChange}>
+                    <SelectTrigger className="w-full" data-testid="select-service">
+                      <SelectValue>
+                        <div className="flex items-center gap-2">
+                          <activeServiceData.icon className="w-4 h-4" />
+                          <span>{activeServiceData.label}</span>
+                        </div>
+                      </SelectValue>
+                    </SelectTrigger>
+                    <SelectContent>
                       {services.map((service) => (
-                        <TabsTrigger
-                          key={service.id}
-                          value={service.id}
-                          className="flex items-center gap-1 text-xs sm:text-sm px-2"
-                          data-testid={`tab-${service.id}`}
-                        >
-                          <service.icon className="w-4 h-4" />
-                          <span className="hidden lg:inline">{service.label}</span>
-                        </TabsTrigger>
+                        <SelectItem key={service.id} value={service.id} data-testid={`option-${service.id}`}>
+                          <div className="flex items-center gap-2">
+                            <service.icon className="w-4 h-4" />
+                            <span>{service.label}</span>
+                          </div>
+                        </SelectItem>
                       ))}
-                    </TabsList>
-                  </Tabs>
+                    </SelectContent>
+                  </Select>
 
                   <div className="flex gap-2">
                     <div className="relative flex-1">

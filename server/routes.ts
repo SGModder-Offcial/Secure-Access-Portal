@@ -25,19 +25,25 @@ export async function registerRoutes(
 
   const MemoryStoreSession = MemoryStore(session);
 
+  const isProduction = process.env.NODE_ENV === "production";
+  
   app.use(
     session({
+      name: "sid",
       secret: SESSION_SECRET,
-      resave: false,
+      resave: true,
       saveUninitialized: false,
+      rolling: true, // Refresh session on each request
+      proxy: true, // Required for Render/Railway behind proxy
       store: new MemoryStoreSession({
         checkPeriod: 86400000,
       }),
       cookie: {
-        secure: process.env.NODE_ENV === "production",
+        secure: isProduction,
         httpOnly: true,
         maxAge: 30 * 60 * 1000, // 30 minutes
-        sameSite: "lax",
+        sameSite: isProduction ? "none" : "lax",
+        path: "/",
       },
     })
   );

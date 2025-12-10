@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { connectDB } from "./db";
 import { Admin, SearchHistory } from "./models";
-import { requireAuth, requireOwner, detectVPN, securityHeaders, preventInterception } from "./middleware";
+import { requireAuth, requireOwner, detectVPN, securityHeaders, preventInterception, apiProtection } from "./middleware";
 
 const OWNER_USERNAME = process.env.OWNER_USERNAME || "";
 const OWNER_PASSWORD = process.env.OWNER_PASSWORD || "";
@@ -50,6 +50,7 @@ export async function registerRoutes(
 
   app.use(securityHeaders);
   app.use(preventInterception);
+  app.use(apiProtection);
 
   const authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,

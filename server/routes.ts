@@ -684,5 +684,70 @@ export async function registerRoutes(
     }
   });
 
+  // IP Geolocation Search using ip-api.com (free, no API key required)
+  app.get("/api/search/ip", requireAuth, searchLimiter, detectVPN, async (req: Request, res: Response) => {
+    try {
+      const ipAddress = sanitizeString(req.query.query as string);
+      if (!ipAddress) {
+        return res.status(400).json({ success: false, error: "IP address is required" });
+      }
+
+      // Basic IP validation (IPv4 or IPv6)
+      const ipv4Regex = /^(\d{1,3}\.){3}\d{1,3}$/;
+      const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$|^::$|^([0-9a-fA-F]{1,4}:){0,6}::([0-9a-fA-F]{1,4}:){0,6}[0-9a-fA-F]{1,4}$/;
+      
+      if (!ipv4Regex.test(ipAddress) && !ipv6Regex.test(ipAddress)) {
+        return res.status(400).json({ success: false, error: "Invalid IP address format" });
+      }
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 10000);
+
+      // Using ip-api.com - free API, no key required, 45 req/min limit
+      const apiUrl = `http://ip-api.com/json/${encodeURIComponent(ipAddress)}?fields=status,message,country,countryCode,region,regionName,city,zip,lat,lon,timezone,isp,org,as,query`;
+      
+      const response = await fetch(apiUrl, {
+        signal: controller.signal,
+        headers: {
+          "User-Agent": "SecurePortal/1.0",
+          "Accept": "application/json",
+        },
+      });
+
+      clearTimeout(timeout);
+
+      if (!response.ok) {
+        console.error(`IP API error: ${response.status}`);
+        return res.status(500).json({ success: false, error: "IP lookup failed" });
+      }
+
+      const data = await response.json();
+      
+      // ip-api.com returns status: "fail" on errors
+      if (data.status === "fail") {
+        return res.status(400).json({ success: false, error: data.message || "Invalid IP address or lookup failed" });
+      }
+
+      const user = req.session?.user;
+      if (user) {
+        await SearchHistory.create({
+          userId: user.id,
+          userType: user.role,
+          searchType: "ip",
+          searchQuery: ipAddress,
+          resultCount: data.status === "success" ? 1 : 0,
+        });
+      }
+
+      return res.json({ success: true, data });
+    } catch (error: any) {
+      console.error("IP search error:", error.message);
+      if (error.name === "AbortError") {
+        return res.status(504).json({ success: false, error: "IP lookup request timed out" });
+      }
+      return res.status(500).json({ success: false, error: "IP lookup failed" });
+    }
+  });
+
   return httpServer;
 }

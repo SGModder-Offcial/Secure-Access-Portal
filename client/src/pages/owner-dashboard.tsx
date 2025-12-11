@@ -833,9 +833,63 @@ export function AdminManagement() {
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="Enter password"
+                    placeholder="Enter password (min 6 characters)"
                     data-testid="input-admin-password"
                   />
+                  {formData.password && (
+                    <div className="space-y-2 pt-1">
+                      <div className="flex items-center gap-2">
+                        <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden">
+                          <div 
+                            className={`h-full transition-all duration-300 ${
+                              formData.password.length >= 12 && /[A-Z]/.test(formData.password) && /[0-9]/.test(formData.password) && /[^A-Za-z0-9]/.test(formData.password)
+                                ? 'w-full bg-green-500'
+                                : formData.password.length >= 8 && (/[A-Z]/.test(formData.password) || /[0-9]/.test(formData.password))
+                                ? 'w-3/4 bg-yellow-500'
+                                : formData.password.length >= 6
+                                ? 'w-1/2 bg-orange-500'
+                                : 'w-1/4 bg-red-500'
+                            }`}
+                          />
+                        </div>
+                        <span className={`text-xs font-medium ${
+                          formData.password.length >= 12 && /[A-Z]/.test(formData.password) && /[0-9]/.test(formData.password) && /[^A-Za-z0-9]/.test(formData.password)
+                            ? 'text-green-500'
+                            : formData.password.length >= 8 && (/[A-Z]/.test(formData.password) || /[0-9]/.test(formData.password))
+                            ? 'text-yellow-500'
+                            : formData.password.length >= 6
+                            ? 'text-orange-500'
+                            : 'text-red-500'
+                        }`}>
+                          {formData.password.length >= 12 && /[A-Z]/.test(formData.password) && /[0-9]/.test(formData.password) && /[^A-Za-z0-9]/.test(formData.password)
+                            ? 'Strong'
+                            : formData.password.length >= 8 && (/[A-Z]/.test(formData.password) || /[0-9]/.test(formData.password))
+                            ? 'Good'
+                            : formData.password.length >= 6
+                            ? 'Fair'
+                            : 'Weak'}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-1 text-xs">
+                        <div className={`flex items-center gap-1 ${formData.password.length >= 6 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                          {formData.password.length >= 6 ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                          <span>Min 6 characters</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${/[A-Z]/.test(formData.password) ? 'text-green-500' : 'text-muted-foreground'}`}>
+                          {/[A-Z]/.test(formData.password) ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                          <span>Uppercase letter</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${/[0-9]/.test(formData.password) ? 'text-green-500' : 'text-muted-foreground'}`}>
+                          {/[0-9]/.test(formData.password) ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                          <span>Number</span>
+                        </div>
+                        <div className={`flex items-center gap-1 ${/[^A-Za-z0-9]/.test(formData.password) ? 'text-green-500' : 'text-muted-foreground'}`}>
+                          {/[^A-Za-z0-9]/.test(formData.password) ? <Check className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                          <span>Special character</span>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="create-status">Status</Label>

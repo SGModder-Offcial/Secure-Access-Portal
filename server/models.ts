@@ -21,7 +21,7 @@ const userSchema = new Schema<IUser>({
   name: { type: String, required: true, minlength: 2 },
   email: { type: String, required: true, unique: true },
   status: { type: String, enum: ["active", "inactive"], default: "active" },
-  features: { type: [String], default: ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"] },
+  features: { type: [String], default: ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan", "ip"] },
   createdAt: { type: Date, default: Date.now },
   lastLogin: { type: Date },
 });

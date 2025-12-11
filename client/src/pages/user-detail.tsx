@@ -32,6 +32,7 @@ import {
   Settings,
   Loader2,
   AlertCircle,
+  Globe,
 } from "lucide-react";
 
 const FEATURE_INFO: Record<string, { label: string; icon: React.ReactNode; description: string }> = {
@@ -41,6 +42,7 @@ const FEATURE_INFO: Record<string, { label: string; icon: React.ReactNode; descr
   pan: { label: "PAN Search", icon: <CreditCard className="w-4 h-4" />, description: "Search by PAN card" },
   "vehicle-info": { label: "Vehicle Info", icon: <Car className="w-4 h-4" />, description: "Get vehicle information" },
   "vehicle-challan": { label: "Vehicle Challan", icon: <FileWarning className="w-4 h-4" />, description: "Check vehicle challans" },
+  ip: { label: "IP Lookup", icon: <Globe className="w-4 h-4" />, description: "Lookup IP address location" },
 };
 
 const SEARCH_TYPE_INFO: Record<string, { label: string; icon: React.ReactNode }> = {
@@ -50,6 +52,7 @@ const SEARCH_TYPE_INFO: Record<string, { label: string; icon: React.ReactNode }>
   pan: { label: "PAN", icon: <CreditCard className="w-3.5 h-3.5" /> },
   vehicle_info: { label: "Vehicle Info", icon: <Car className="w-3.5 h-3.5" /> },
   vehicle_challan: { label: "Challan", icon: <FileWarning className="w-3.5 h-3.5" /> },
+  ip: { label: "IP Lookup", icon: <Globe className="w-3.5 h-3.5" /> },
 };
 
 interface UserDetailData {

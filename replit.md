@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a secure admin dashboard application with role-based access control (Owner vs Admin) that provides search functionality against an external API. The application features dual authentication paths, admin management capabilities for owners, and various search types (mobile, email, ID, alt mobile). It's built as a full-stack TypeScript application with a React frontend and Express backend.
+This is a secure admin dashboard application with role-based access control (Admin vs User) that provides search functionality against an external API. The application features dual authentication paths, user management capabilities for admins, and various search types (mobile, email, ID, alt mobile). It's built as a full-stack TypeScript application with a React frontend and Express backend.
 
 ## User Preferences
 
@@ -26,10 +26,10 @@ Preferred communication style: Simple, everyday language.
 - **Security Middleware**: Custom VPN detection, security headers, and interception prevention
 
 ### Authentication & Authorization
-- **Dual Role System**: Owner (environment-based credentials) and Admin (MongoDB-stored)
+- **Dual Role System**: Admin (environment-based credentials) and User (MongoDB-stored)
 - **Session-based Auth**: HTTP-only cookies with secure flags in production
-- **Middleware Guards**: `requireAuth` for authenticated routes, `requireOwner` for owner-only routes
-- **Owner Credentials**: Stored in environment variables (OWNER_USERNAME, OWNER_PASSWORD)
+- **Middleware Guards**: `requireAuth` for authenticated routes, `requireAdmin` for admin-only routes
+- **Admin Credentials**: Stored in environment variables (ADMIN_USERNAME, ADMIN_PASSWORD)
 
 ### Data Layer
 - **Primary Database**: MongoDB with Mongoose ODM for admin users and search history
@@ -78,8 +78,8 @@ Preferred communication style: Simple, everyday language.
 
 ### Required Environment Variables
 - `MONGODB_URL` - MongoDB connection string
-- `OWNER_USERNAME` - Owner account username
-- `OWNER_PASSWORD` - Owner account password
+- `ADMIN_USERNAME` - Admin account username
+- `ADMIN_PASSWORD` - Admin account password
 - `SESSION_SECRET` - Session encryption secret
 - `DATABASE_URL` - PostgreSQL URL (for Drizzle, if used)
 

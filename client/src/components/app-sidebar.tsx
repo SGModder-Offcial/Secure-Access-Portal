@@ -33,16 +33,16 @@ export function AppSidebar() {
   const [location, navigate] = useLocation();
   const { setOpenMobile, isMobile } = useSidebar();
 
-  const isOwner = user?.role === "owner";
+  const isAdmin = user?.role === "admin";
 
-  const searchItems = isOwner
+  const searchItems = isAdmin
     ? [
-        { title: "Mobile Search", url: "/owner?search=mobile", searchType: "mobile", icon: Phone },
-        { title: "Email Search", url: "/owner?search=email", searchType: "email", icon: Mail },
-        { title: "Aadhar Search", url: "/owner?search=aadhar", searchType: "aadhar", icon: CreditCard },
-        { title: "PAN Search", url: "/owner?search=pan", searchType: "pan", icon: CreditCard },
-        { title: "Vehicle Info", url: "/owner?search=vehicle-info", searchType: "vehicle-info", icon: Car },
-        { title: "Vehicle Challan", url: "/owner?search=vehicle-challan", searchType: "vehicle-challan", icon: FileWarning },
+        { title: "Mobile Search", url: "/admin?search=mobile", searchType: "mobile", icon: Phone },
+        { title: "Email Search", url: "/admin?search=email", searchType: "email", icon: Mail },
+        { title: "Aadhar Search", url: "/admin?search=aadhar", searchType: "aadhar", icon: CreditCard },
+        { title: "PAN Search", url: "/admin?search=pan", searchType: "pan", icon: CreditCard },
+        { title: "Vehicle Info", url: "/admin?search=vehicle-info", searchType: "vehicle-info", icon: Car },
+        { title: "Vehicle Challan", url: "/admin?search=vehicle-challan", searchType: "vehicle-challan", icon: FileWarning },
       ]
     : [
         { title: "Mobile Search", url: "/dashboard?search=mobile", searchType: "mobile", icon: Phone },
@@ -53,9 +53,9 @@ export function AppSidebar() {
         { title: "Vehicle Challan", url: "/dashboard?search=vehicle-challan", searchType: "vehicle-challan", icon: FileWarning },
       ];
 
-  const ownerItems = [
-    { title: "Dashboard", url: "/owner", icon: LayoutDashboard },
-    { title: "Manage Admins", url: "/owner/admins", icon: Users },
+  const adminItems = [
+    { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
+    { title: "Manage Users", url: "/admin/users", icon: Users },
   ];
 
   const handleLogout = async () => {
@@ -83,23 +83,23 @@ export function AppSidebar() {
               {user?.name || user?.username}
             </p>
             <Badge
-              variant={isOwner ? "default" : "secondary"}
+              variant={isAdmin ? "default" : "secondary"}
               className="text-xs mt-1"
               data-testid="badge-user-role"
             >
-              {isOwner ? "Owner" : "Admin"}
+              {isAdmin ? "Admin" : "User"}
             </Badge>
           </div>
         </div>
       </SidebarHeader>
 
       <SidebarContent>
-        {isOwner && (
+        {isAdmin && (
           <SidebarGroup>
             <SidebarGroupLabel>Management</SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {ownerItems.map((item) => (
+                {adminItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
                       asChild

@@ -1,7 +1,7 @@
 import { z } from "zod";
 
-// Admin user schema for MongoDB
-export const adminSchema = z.object({
+// User schema for MongoDB
+export const userSchema = z.object({
   _id: z.string().optional(),
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(4, "Password must be at least 4 characters"),
@@ -12,18 +12,18 @@ export const adminSchema = z.object({
   lastLogin: z.date().optional(),
 });
 
-export const insertAdminSchema = adminSchema.omit({ _id: true, createdAt: true, lastLogin: true });
-export const updateAdminSchema = adminSchema.partial().omit({ _id: true, createdAt: true });
+export const insertUserSchema = userSchema.omit({ _id: true, createdAt: true, lastLogin: true });
+export const updateUserSchema = userSchema.partial().omit({ _id: true, createdAt: true });
 
-export type Admin = z.infer<typeof adminSchema>;
-export type InsertAdmin = z.infer<typeof insertAdminSchema>;
-export type UpdateAdmin = z.infer<typeof updateAdminSchema>;
+export type User = z.infer<typeof userSchema>;
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpdateUser = z.infer<typeof updateUserSchema>;
 
 // Search history schema
 export const searchHistorySchema = z.object({
   _id: z.string().optional(),
   userId: z.string(),
-  userType: z.enum(["owner", "admin"]),
+  userType: z.enum(["admin", "user"]),
   searchType: z.enum(["mobile", "email", "id", "alt"]),
   searchQuery: z.string(),
   resultCount: z.number().default(0),
@@ -36,7 +36,7 @@ export type SearchHistory = z.infer<typeof searchHistorySchema>;
 export const loginSchema = z.object({
   username: z.string().min(1, "Username is required"),
   password: z.string().min(1, "Password is required"),
-  loginType: z.enum(["owner", "admin"]),
+  loginType: z.enum(["admin", "user"]),
 });
 
 export type LoginCredentials = z.infer<typeof loginSchema>;
@@ -46,7 +46,7 @@ export interface SessionUser {
   id: string;
   username: string;
   name: string;
-  role: "owner" | "admin";
+  role: "admin" | "user";
 }
 
 // Search result type

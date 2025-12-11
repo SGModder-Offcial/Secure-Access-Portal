@@ -5,11 +5,11 @@ import MemoryStore from "memorystore";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { connectDB } from "./db";
-import { Admin, SearchHistory } from "./models";
-import { requireAuth, requireOwner, detectVPN, securityHeaders, preventInterception, apiProtection } from "./middleware";
+import { User, SearchHistory } from "./models";
+import { requireAuth, requireAdmin, detectVPN, securityHeaders, preventInterception, apiProtection } from "./middleware";
 
-const OWNER_USERNAME = process.env.OWNER_USERNAME || "";
-const OWNER_PASSWORD = process.env.OWNER_PASSWORD || "";
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const SESSION_SECRET = process.env.SESSION_SECRET || "super-secret-session-key-change-in-production";
 
 // Input validation helpers to prevent NoSQL injection
@@ -101,14 +101,14 @@ export async function registerRoutes(
         return res.status(400).json({ success: false, error: "Invalid input format" });
       }
 
-      if (loginType === "owner") {
-        // Prevent login with empty owner credentials
-        if (!OWNER_USERNAME || !OWNER_PASSWORD) {
-          console.error("Owner credentials not configured");
-          return res.status(401).json({ success: false, error: "Invalid owner credentials" });
+      if (loginType === "admin") {
+        // Prevent login with empty admin credentials
+        if (!ADMIN_USERNAME || !ADMIN_PASSWORD) {
+          console.error("Admin credentials not configured");
+          return res.status(401).json({ success: false, error: "Invalid admin credentials" });
         }
         
-        if (username === OWNER_USERNAME && password === OWNER_PASSWORD) {
+        if (username === ADMIN_USERNAME && password === ADMIN_PASSWORD) {
           // Regenerate session to prevent session fixation
           req.session.regenerate((err) => {
             if (err) {
@@ -116,10 +116,10 @@ export async function registerRoutes(
               return res.status(500).json({ success: false, error: "Login failed" });
             }
             req.session.user = {
-              id: "owner",
-              username: OWNER_USERNAME,
-              name: "System Owner",
-              role: "owner",
+              id: "admin",
+              username: ADMIN_USERNAME,
+              name: "System Admin",
+              role: "admin",
             };
             return res.json({
               success: true,
@@ -128,23 +128,23 @@ export async function registerRoutes(
           });
           return;
         }
-        return res.status(401).json({ success: false, error: "Invalid owner credentials" });
+        return res.status(401).json({ success: false, error: "Invalid admin credentials" });
       }
 
-      if (loginType === "admin") {
+      if (loginType === "user") {
         // Use string explicitly to prevent NoSQL injection with objects
-        const admin = await Admin.findOne({ username: String(username), status: "active" });
-        if (!admin) {
+        const user = await User.findOne({ username: String(username), status: "active" });
+        if (!user) {
           return res.status(401).json({ success: false, error: "Invalid credentials or account inactive" });
         }
 
-        const isPasswordValid = await bcrypt.compare(password, admin.password);
+        const isPasswordValid = await bcrypt.compare(password, user.password);
         if (!isPasswordValid) {
           return res.status(401).json({ success: false, error: "Invalid credentials" });
         }
 
-        admin.lastLogin = new Date();
-        await admin.save();
+        user.lastLogin = new Date();
+        await user.save();
 
         // Regenerate session to prevent session fixation
         req.session.regenerate((err) => {
@@ -153,10 +153,10 @@ export async function registerRoutes(
             return res.status(500).json({ success: false, error: "Login failed" });
           }
           req.session.user = {
-            id: admin._id.toString(),
-            username: admin.username,
-            name: admin.name,
-            role: "admin",
+            id: user._id.toString(),
+            username: user.username,
+            name: user.name,
+            role: "user",
           };
 
           return res.json({
@@ -192,18 +192,18 @@ export async function registerRoutes(
     });
   });
 
-  app.get("/api/owner/stats", requireOwner, detectVPN, async (req: Request, res: Response) => {
+  app.get("/api/admin/stats", requireAdmin, detectVPN, async (req: Request, res: Response) => {
     try {
-      const totalAdmins = await Admin.countDocuments();
-      const activeAdmins = await Admin.countDocuments({ status: "active" });
+      const totalUsers = await User.countDocuments();
+      const activeUsers = await User.countDocuments({ status: "active" });
       const recentSearches = await SearchHistory.countDocuments({
         timestamp: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
       });
 
       return res.json({
         success: true,
-        totalAdmins,
-        activeAdmins,
+        totalUsers,
+        activeUsers,
         recentSearches,
       });
     } catch (error) {
@@ -212,17 +212,17 @@ export async function registerRoutes(
     }
   });
 
-  app.get("/api/owner/admins", requireOwner, detectVPN, async (req: Request, res: Response) => {
+  app.get("/api/admin/users", requireAdmin, detectVPN, async (req: Request, res: Response) => {
     try {
-      const admins = await Admin.find().select("-password").sort({ createdAt: -1 });
-      return res.json(admins);
+      const users = await User.find().select("-password").sort({ createdAt: -1 });
+      return res.json(users);
     } catch (error) {
-      console.error("Fetch admins error:", error);
-      return res.status(500).json({ success: false, error: "Failed to fetch admins" });
+      console.error("Fetch users error:", error);
+      return res.status(500).json({ success: false, error: "Failed to fetch users" });
     }
   });
 
-  app.post("/api/owner/admins", requireOwner, detectVPN, async (req: Request, res: Response) => {
+  app.post("/api/admin/users", requireAdmin, detectVPN, async (req: Request, res: Response) => {
     try {
       const username = sanitizeString(req.body.username);
       const password = sanitizeString(req.body.password);
@@ -251,17 +251,17 @@ export async function registerRoutes(
         return res.status(400).json({ success: false, error: "Name must be 2-100 characters" });
       }
 
-      const existingAdmin = await Admin.findOne({
+      const existingUser = await User.findOne({
         $or: [{ username: String(username) }, { email: String(email) }],
       });
 
-      if (existingAdmin) {
+      if (existingUser) {
         return res.status(400).json({ success: false, error: "Username or email already exists" });
       }
 
       const hashedPassword = await bcrypt.hash(password, 12);
 
-      const admin = new Admin({
+      const user = new User({
         username: String(username),
         password: hashedPassword,
         name: String(name),
@@ -269,74 +269,74 @@ export async function registerRoutes(
         status: status === "inactive" ? "inactive" : "active",
       });
 
-      await admin.save();
+      await user.save();
 
-      const adminResponse = admin.toObject();
-      delete adminResponse.password;
+      const userResponse = user.toObject();
+      delete userResponse.password;
 
-      return res.status(201).json({ success: true, admin: adminResponse });
+      return res.status(201).json({ success: true, user: userResponse });
     } catch (error) {
-      console.error("Create admin error:", error);
-      return res.status(500).json({ success: false, error: "Failed to create admin" });
+      console.error("Create user error:", error);
+      return res.status(500).json({ success: false, error: "Failed to create user" });
     }
   });
 
-  app.put("/api/owner/admins/:id", requireOwner, detectVPN, async (req: Request, res: Response) => {
+  app.put("/api/admin/users/:id", requireAdmin, detectVPN, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
       const { username, password, name, email, status } = req.body;
 
-      const admin = await Admin.findById(id);
-      if (!admin) {
-        return res.status(404).json({ success: false, error: "Admin not found" });
+      const user = await User.findById(id);
+      if (!user) {
+        return res.status(404).json({ success: false, error: "User not found" });
       }
 
-      if (username && username !== admin.username) {
-        const existing = await Admin.findOne({ username });
+      if (username && username !== user.username) {
+        const existing = await User.findOne({ username });
         if (existing) {
           return res.status(400).json({ success: false, error: "Username already exists" });
         }
-        admin.username = username;
+        user.username = username;
       }
 
-      if (email && email !== admin.email) {
-        const existing = await Admin.findOne({ email });
+      if (email && email !== user.email) {
+        const existing = await User.findOne({ email });
         if (existing) {
           return res.status(400).json({ success: false, error: "Email already exists" });
         }
-        admin.email = email;
+        user.email = email;
       }
 
-      if (name) admin.name = name;
-      if (status) admin.status = status;
+      if (name) user.name = name;
+      if (status) user.status = status;
 
       if (password) {
-        admin.password = await bcrypt.hash(password, 12);
+        user.password = await bcrypt.hash(password, 12);
       }
 
-      await admin.save();
+      await user.save();
 
-      const adminResponse = admin.toObject();
-      delete adminResponse.password;
+      const userResponse = user.toObject();
+      delete userResponse.password;
 
-      return res.json({ success: true, admin: adminResponse });
+      return res.json({ success: true, user: userResponse });
     } catch (error) {
-      console.error("Update admin error:", error);
-      return res.status(500).json({ success: false, error: "Failed to update admin" });
+      console.error("Update user error:", error);
+      return res.status(500).json({ success: false, error: "Failed to update user" });
     }
   });
 
-  app.delete("/api/owner/admins/:id", requireOwner, detectVPN, async (req: Request, res: Response) => {
+  app.delete("/api/admin/users/:id", requireAdmin, detectVPN, async (req: Request, res: Response) => {
     try {
       const { id } = req.params;
-      const result = await Admin.findByIdAndDelete(id);
+      const result = await User.findByIdAndDelete(id);
       if (!result) {
-        return res.status(404).json({ success: false, error: "Admin not found" });
+        return res.status(404).json({ success: false, error: "User not found" });
       }
       return res.json({ success: true });
     } catch (error) {
-      console.error("Delete admin error:", error);
-      return res.status(500).json({ success: false, error: "Failed to delete admin" });
+      console.error("Delete user error:", error);
+      return res.status(500).json({ success: false, error: "Failed to delete user" });
     }
   });
 

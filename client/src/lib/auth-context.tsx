@@ -4,7 +4,7 @@ import type { SessionUser } from "@shared/schema";
 interface AuthContextType {
   user: SessionUser | null;
   isLoading: boolean;
-  login: (username: string, password: string, loginType: "owner" | "admin") => Promise<{ success: boolean; error?: string }>;
+  login: (username: string, password: string, loginType: "admin" | "user") => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     checkAuth();
   }, []);
 
-  const login = async (username: string, password: string, loginType: "owner" | "admin") => {
+  const login = async (username: string, password: string, loginType: "admin" | "user") => {
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",

@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export interface IAdmin extends Document {
+export interface IUser extends Document {
   _id: string;
   username: string;
   password: string;
@@ -11,7 +11,7 @@ export interface IAdmin extends Document {
   lastLogin?: Date;
 }
 
-const adminSchema = new Schema<IAdmin>({
+const userSchema = new Schema<IUser>({
   username: { type: String, required: true, unique: true, minlength: 3 },
   password: { type: String, required: true, minlength: 4 },
   name: { type: String, required: true, minlength: 2 },
@@ -23,7 +23,7 @@ const adminSchema = new Schema<IAdmin>({
 
 export interface ISearchHistory extends Document {
   userId: string;
-  userType: "owner" | "admin";
+  userType: "admin" | "user";
   searchType: "mobile" | "email" | "aadhar" | "pan" | "alt" | "vehicle_challan" | "vehicle_info";
   searchQuery: string;
   resultCount: number;
@@ -32,12 +32,12 @@ export interface ISearchHistory extends Document {
 
 const searchHistorySchema = new Schema<ISearchHistory>({
   userId: { type: String, required: true },
-  userType: { type: String, enum: ["owner", "admin"], required: true },
+  userType: { type: String, enum: ["admin", "user"], required: true },
   searchType: { type: String, enum: ["mobile", "email", "aadhar", "pan", "alt", "vehicle_challan", "vehicle_info"], required: true },
   searchQuery: { type: String, required: true },
   resultCount: { type: Number, default: 0 },
   timestamp: { type: Date, default: Date.now },
 });
 
-export const Admin = mongoose.models.Admin || mongoose.model<IAdmin>("Admin", adminSchema);
+export const User = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
 export const SearchHistory = mongoose.models.SearchHistory || mongoose.model<ISearchHistory>("SearchHistory", searchHistorySchema);

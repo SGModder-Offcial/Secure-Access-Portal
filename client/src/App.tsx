@@ -7,10 +7,10 @@ import { AuthProvider, useAuth } from "@/lib/auth-context";
 import NotFound from "@/pages/not-found";
 import LoginPage from "@/pages/login";
 import { DashboardHome, MobileSearchPage, EmailSearchPage, IdSearchPage } from "@/pages/dashboard";
-import { OwnerDashboard, AdminManagement } from "@/pages/owner-dashboard";
+import { AdminDashboard, UserManagement } from "@/pages/admin-dashboard";
 import { Loader2 } from "lucide-react";
 
-function ProtectedRoute({ children, requireOwner = false }: { children: React.ReactNode; requireOwner?: boolean }) {
+function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode; requireAdmin?: boolean }) {
   const { user, isLoading } = useAuth();
   const [, navigate] = useLocation();
 
@@ -26,7 +26,7 @@ function ProtectedRoute({ children, requireOwner = false }: { children: React.Re
     return <Redirect to="/" />;
   }
 
-  if (requireOwner && user.role !== "owner") {
+  if (requireAdmin && user.role !== "admin") {
     return <Redirect to="/dashboard" />;
   }
 
@@ -45,7 +45,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
 
   if (user) {
-    return <Redirect to={user.role === "owner" ? "/owner" : "/dashboard"} />;
+    return <Redirect to={user.role === "admin" ? "/admin" : "/dashboard"} />;
   }
 
   return <>{children}</>;
@@ -80,14 +80,14 @@ function Router() {
           <IdSearchPage />
         </ProtectedRoute>
       </Route>
-      <Route path="/owner">
-        <ProtectedRoute requireOwner>
-          <OwnerDashboard />
+      <Route path="/admin">
+        <ProtectedRoute requireAdmin>
+          <AdminDashboard />
         </ProtectedRoute>
       </Route>
-      <Route path="/owner/admins">
-        <ProtectedRoute requireOwner>
-          <AdminManagement />
+      <Route path="/admin/users">
+        <ProtectedRoute requireAdmin>
+          <UserManagement />
         </ProtectedRoute>
       </Route>
 

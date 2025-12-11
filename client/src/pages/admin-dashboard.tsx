@@ -15,7 +15,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { Admin } from "@shared/schema";
+import type { User as UserType } from "@shared/schema";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import {
@@ -82,9 +82,9 @@ function formatAddress(addr: string): string {
   return addr.replace(/^!+/, "").replace(/!+/g, ", ").replace(/,\s*,/g, ",").replace(/,\s*$/g, "").replace(/^\s*,\s*/g, "").trim();
 }
 
-type OwnerServiceType = "mobile" | "email" | "aadhar" | "pan" | "vehicle-info" | "vehicle-challan";
+type AdminServiceType = "mobile" | "email" | "aadhar" | "pan" | "vehicle-info" | "vehicle-challan";
 
-function OwnerVehicleResultDisplay({ 
+function AdminVehicleResultDisplay({ 
   data, 
   type, 
   copyToClipboard, 
@@ -264,21 +264,21 @@ function OwnerVehicleResultDisplay({
   );
 }
 
-function OwnerSearchSection() {
-  const getSearchParam = (): OwnerServiceType => {
+function AdminSearchSection() {
+  const getSearchParam = (): AdminServiceType => {
     const params = new URLSearchParams(window.location.search);
     const param = params.get("search");
-    const validTypes: OwnerServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
-    return validTypes.includes(param as OwnerServiceType) ? (param as OwnerServiceType) : "mobile";
+    const validTypes: AdminServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
+    return validTypes.includes(param as AdminServiceType) ? (param as AdminServiceType) : "mobile";
   };
   
-  const [activeService, setActiveService] = useState<OwnerServiceType>(getSearchParam());
+  const [activeService, setActiveService] = useState<AdminServiceType>(getSearchParam());
   
   useEffect(() => {
     const handleSearchTypeChange = (e: Event) => {
       const customEvent = e as CustomEvent;
       const newType = customEvent.detail?.searchType;
-      const validTypes: OwnerServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
+      const validTypes: AdminServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
       if (validTypes.includes(newType)) {
         setActiveService(newType);
         setQuery("");
@@ -384,7 +384,7 @@ function OwnerSearchSection() {
   };
 
   const handleServiceChange = (value: string) => {
-    setActiveService(value as OwnerServiceType);
+    setActiveService(value as AdminServiceType);
     setQuery("");
     setResults([]);
     setVehicleData(null);
@@ -403,7 +403,7 @@ function OwnerSearchSection() {
       </CardHeader>
       <CardContent className="space-y-4">
         <Select value={activeService} onValueChange={handleServiceChange}>
-          <SelectTrigger className="w-full" data-testid="select-owner-service">
+          <SelectTrigger className="w-full" data-testid="select-user-service">
             <SelectValue>
               <div className="flex items-center gap-2">
                 <activeServiceData.icon className="w-4 h-4" />
@@ -413,7 +413,7 @@ function OwnerSearchSection() {
           </SelectTrigger>
           <SelectContent>
             {services.map((service) => (
-              <SelectItem key={service.id} value={service.id} data-testid={`option-owner-${service.id}`}>
+              <SelectItem key={service.id} value={service.id} data-testid={`option-user-${service.id}`}>
                 <div className="flex items-center gap-2">
                   <service.icon className="w-4 h-4" />
                   <span>{service.label}</span>
@@ -433,10 +433,10 @@ function OwnerSearchSection() {
               onKeyPress={(e) => e.key === "Enter" && handleSearch()}
               disabled={isLoading}
               className="pl-10"
-              data-testid="input-owner-search"
+              data-testid="input-user-search"
             />
           </div>
-          <Button onClick={handleSearch} disabled={isLoading} className="px-6" data-testid="button-owner-search">
+          <Button onClick={handleSearch} disabled={isLoading} className="px-6" data-testid="button-user-search">
             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Search className="w-4 h-4" />}
           </Button>
         </div>
@@ -450,7 +450,7 @@ function OwnerSearchSection() {
 
         {hasSearched && !isLoading && !error && vehicleData && isVehicleSearch && (
           <div className="space-y-4 pt-4 border-t">
-            <OwnerVehicleResultDisplay data={vehicleData} type={activeService as "vehicle-info" | "vehicle-challan"} copyToClipboard={copyToClipboard} copiedField={copiedField} />
+            <AdminVehicleResultDisplay data={vehicleData} type={activeService as "vehicle-info" | "vehicle-challan"} copyToClipboard={copyToClipboard} copiedField={copiedField} />
           </div>
         )}
 
@@ -543,13 +543,13 @@ function OwnerSearchSection() {
   );
 }
 
-interface OwnerLayoutProps {
+interface AdminLayoutProps {
   children: React.ReactNode;
   title: string;
   subtitle?: string;
 }
 
-function OwnerLayout({ children, title, subtitle }: OwnerLayoutProps) {
+function AdminLayout({ children, title, subtitle }: AdminLayoutProps) {
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
@@ -571,7 +571,7 @@ function OwnerLayout({ children, title, subtitle }: OwnerLayoutProps) {
             <div className="flex items-center gap-2">
               <Badge className="hidden sm:flex items-center gap-1.5">
                 <Shield className="w-3 h-3" />
-                <span className="text-xs">Owner Access</span>
+                <span className="text-xs">Admin Access</span>
               </Badge>
               <ThemeToggle />
             </div>
@@ -585,41 +585,41 @@ function OwnerLayout({ children, title, subtitle }: OwnerLayoutProps) {
   );
 }
 
-export function OwnerDashboard() {
-  const { data: stats, isLoading } = useQuery<{ totalAdmins: number; activeAdmins: number; recentSearches: number }>({
-    queryKey: ["/api/owner/stats"],
+export function AdminDashboard() {
+  const { data: stats, isLoading } = useQuery<{ totalUsers: number; activeUsers: number; recentSearches: number }>({
+    queryKey: ["/api/admin/stats"],
   });
 
   return (
-    <OwnerLayout title="Owner Dashboard" subtitle="System overview and management">
+    <AdminLayout title="Admin Dashboard" subtitle="System overview and management">
       <div className="space-y-4">
         <div className="grid grid-cols-3 gap-2 sm:gap-4">
           <Card className="p-3 sm:p-0">
             <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 p-0 sm:p-4 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Total Admins</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Total Users</CardTitle>
               <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent className="p-0 pt-1 sm:p-4 sm:pt-0">
               {isLoading ? (
                 <Skeleton className="h-6 w-10 sm:h-8 sm:w-16" />
               ) : (
-                <div className="text-lg sm:text-2xl font-bold" data-testid="text-total-admins">
-                  {stats?.totalAdmins || 0}
+                <div className="text-lg sm:text-2xl font-bold" data-testid="text-total-users">
+                  {stats?.totalUsers || 0}
                 </div>
               )}
             </CardContent>
           </Card>
           <Card className="p-3 sm:p-0">
             <CardHeader className="flex flex-row items-center justify-between gap-1 space-y-0 p-0 sm:p-4 sm:pb-2">
-              <CardTitle className="text-xs sm:text-sm font-medium">Active Admins</CardTitle>
+              <CardTitle className="text-xs sm:text-sm font-medium">Active Users</CardTitle>
               <UserCheck className="h-3 w-3 sm:h-4 sm:w-4 text-green-500" />
             </CardHeader>
             <CardContent className="p-0 pt-1 sm:p-4 sm:pt-0">
               {isLoading ? (
                 <Skeleton className="h-6 w-10 sm:h-8 sm:w-16" />
               ) : (
-                <div className="text-lg sm:text-2xl font-bold" data-testid="text-active-admins">
-                  {stats?.activeAdmins || 0}
+                <div className="text-lg sm:text-2xl font-bold" data-testid="text-active-users">
+                  {stats?.activeUsers || 0}
                 </div>
               )}
             </CardContent>
@@ -641,18 +641,18 @@ export function OwnerDashboard() {
           </Card>
         </div>
 
-        <OwnerSearchSection />
+        <AdminSearchSection />
       </div>
-    </OwnerLayout>
+    </AdminLayout>
   );
 }
 
-export function AdminManagement() {
+export function UserManagement() {
   const { toast } = useToast();
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-  const [selectedAdmin, setSelectedAdmin] = useState<Admin | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserType | null>(null);
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -661,71 +661,71 @@ export function AdminManagement() {
     status: "active" as "active" | "inactive",
   });
 
-  const { data: admins, isLoading, error } = useQuery<Admin[]>({
-    queryKey: ["/api/owner/admins"],
+  const { data: users, isLoading, error } = useQuery<UserType[]>({
+    queryKey: ["/api/admin/users"],
   });
 
   const createMutation = useMutation({
     mutationFn: async (data: typeof formData) => {
-      const res = await apiRequest("POST", "/api/owner/admins", data);
+      const res = await apiRequest("POST", "/api/admin/users", data);
       return res.json();
     },
     onSuccess: (data) => {
       if (data.success) {
-        toast({ title: "Success", description: "Admin created successfully" });
+        toast({ title: "Success", description: "User created successfully" });
         setIsCreateOpen(false);
         resetForm();
-        queryClient.invalidateQueries({ queryKey: ["/api/owner/admins"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/owner/stats"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       } else {
-        toast({ title: "Error", description: data.error || "Failed to create admin", variant: "destructive" });
+        toast({ title: "Error", description: data.error || "Failed to create user", variant: "destructive" });
       }
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to create admin", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to create user", variant: "destructive" });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<typeof formData> }) => {
-      const res = await apiRequest("PUT", `/api/owner/admins/${id}`, data);
+      const res = await apiRequest("PUT", `/api/admin/users/${id}`, data);
       return res.json();
     },
     onSuccess: (data) => {
       if (data.success) {
-        toast({ title: "Success", description: "Admin updated successfully" });
+        toast({ title: "Success", description: "User updated successfully" });
         setIsEditOpen(false);
-        setSelectedAdmin(null);
+        setSelectedUser(null);
         resetForm();
-        queryClient.invalidateQueries({ queryKey: ["/api/owner/admins"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/owner/stats"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       } else {
-        toast({ title: "Error", description: data.error || "Failed to update admin", variant: "destructive" });
+        toast({ title: "Error", description: data.error || "Failed to update user", variant: "destructive" });
       }
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to update admin", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to update user", variant: "destructive" });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const res = await apiRequest("DELETE", `/api/owner/admins/${id}`);
+      const res = await apiRequest("DELETE", `/api/admin/users/${id}`);
       return res.json();
     },
     onSuccess: (data) => {
       if (data.success) {
-        toast({ title: "Success", description: "Admin deleted successfully" });
+        toast({ title: "Success", description: "User deleted successfully" });
         setIsDeleteOpen(false);
-        setSelectedAdmin(null);
-        queryClient.invalidateQueries({ queryKey: ["/api/owner/admins"] });
-        queryClient.invalidateQueries({ queryKey: ["/api/owner/stats"] });
+        setSelectedUser(null);
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
       } else {
-        toast({ title: "Error", description: data.error || "Failed to delete admin", variant: "destructive" });
+        toast({ title: "Error", description: data.error || "Failed to delete user", variant: "destructive" });
       }
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to delete admin", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to delete user", variant: "destructive" });
     },
   });
 
@@ -739,20 +739,20 @@ export function AdminManagement() {
     });
   };
 
-  const openEditDialog = (admin: Admin) => {
-    setSelectedAdmin(admin);
+  const openEditDialog = (user: UserType) => {
+    setSelectedUser(user);
     setFormData({
-      username: admin.username,
+      username: user.username,
       password: "",
-      name: admin.name,
-      email: admin.email,
-      status: admin.status,
+      name: user.name,
+      email: user.email,
+      status: user.status,
     });
     setIsEditOpen(true);
   };
 
-  const openDeleteDialog = (admin: Admin) => {
-    setSelectedAdmin(admin);
+  const openDeleteDialog = (user: UserType) => {
+    setSelectedUser(user);
     setIsDeleteOpen(true);
   };
 
@@ -761,38 +761,38 @@ export function AdminManagement() {
   };
 
   const handleUpdate = () => {
-    if (!selectedAdmin?._id) return;
+    if (!selectedUser?._id) return;
     const updateData: Partial<typeof formData> = { ...formData };
     if (!updateData.password) {
       delete updateData.password;
     }
-    updateMutation.mutate({ id: selectedAdmin._id, data: updateData });
+    updateMutation.mutate({ id: selectedUser._id, data: updateData });
   };
 
   const handleDelete = () => {
-    if (!selectedAdmin?._id) return;
-    deleteMutation.mutate(selectedAdmin._id);
+    if (!selectedUser?._id) return;
+    deleteMutation.mutate(selectedUser._id);
   };
 
   return (
-    <OwnerLayout title="Admin Management" subtitle="Create, edit, and manage admin accounts">
+    <AdminLayout title="User Management" subtitle="Create, edit, and manage user accounts">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4 flex-wrap">
           <div>
-            <CardTitle>Admin Accounts</CardTitle>
-            <CardDescription>Manage all admin users in the system</CardDescription>
+            <CardTitle>User Accounts</CardTitle>
+            <CardDescription>Manage all users in the system</CardDescription>
           </div>
           <Dialog open={isCreateOpen} onOpenChange={setIsCreateOpen}>
             <DialogTrigger asChild>
-              <Button data-testid="button-create-admin" onClick={() => { resetForm(); setIsCreateOpen(true); }}>
+              <Button data-testid="button-create-user" onClick={() => { resetForm(); setIsCreateOpen(true); }}>
                 <Plus className="w-4 h-4 mr-2" />
-                Add Admin
+                Add User
               </Button>
             </DialogTrigger>
             <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Create New Admin</DialogTitle>
-                <DialogDescription>Add a new admin account to the system</DialogDescription>
+                <DialogTitle>Create New User</DialogTitle>
+                <DialogDescription>Add a new user account to the system</DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
@@ -802,7 +802,7 @@ export function AdminManagement() {
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     placeholder="Enter full name"
-                    data-testid="input-admin-name"
+                    data-testid="input-user-name"
                   />
                 </div>
                 <div className="space-y-2">
@@ -813,7 +813,7 @@ export function AdminManagement() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     placeholder="Enter email address"
-                    data-testid="input-admin-email"
+                    data-testid="input-user-email"
                   />
                 </div>
                 <div className="space-y-2">
@@ -823,7 +823,7 @@ export function AdminManagement() {
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
                     placeholder="Enter username"
-                    data-testid="input-admin-username"
+                    data-testid="input-user-username"
                   />
                 </div>
                 <div className="space-y-2">
@@ -834,7 +834,7 @@ export function AdminManagement() {
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     placeholder="Enter password (min 6 characters)"
-                    data-testid="input-admin-password"
+                    data-testid="input-user-password"
                   />
                   {formData.password && (
                     <div className="space-y-2 pt-1">
@@ -897,7 +897,7 @@ export function AdminManagement() {
                     value={formData.status}
                     onValueChange={(v) => setFormData({ ...formData, status: v as "active" | "inactive" })}
                   >
-                    <SelectTrigger data-testid="select-admin-status">
+                    <SelectTrigger data-testid="select-user-status">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -911,7 +911,7 @@ export function AdminManagement() {
                 <Button variant="outline" onClick={() => setIsCreateOpen(false)}>Cancel</Button>
                 <Button onClick={handleCreate} disabled={createMutation.isPending} data-testid="button-confirm-create">
                   {createMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                  Create Admin
+                  Create User
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -927,9 +927,9 @@ export function AdminManagement() {
           ) : error ? (
             <div className="flex items-center gap-2 p-4 text-destructive">
               <AlertCircle className="w-5 h-5" />
-              <span>Failed to load admins</span>
+              <span>Failed to load users</span>
             </div>
-          ) : admins && admins.length > 0 ? (
+          ) : users && users.length > 0 ? (
             <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
@@ -942,19 +942,19 @@ export function AdminManagement() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {admins.map((admin) => (
-                    <TableRow key={admin._id} data-testid={`row-admin-${admin._id}`}>
-                      <TableCell className="font-medium">{admin.name}</TableCell>
-                      <TableCell className="hidden sm:table-cell font-mono text-sm">{admin.username}</TableCell>
-                      <TableCell className="hidden md:table-cell text-muted-foreground">{admin.email}</TableCell>
+                  {users.map((user) => (
+                    <TableRow key={user._id} data-testid={`row-user-${user._id}`}>
+                      <TableCell className="font-medium">{user.name}</TableCell>
+                      <TableCell className="hidden sm:table-cell font-mono text-sm">{user.username}</TableCell>
+                      <TableCell className="hidden md:table-cell text-muted-foreground">{user.email}</TableCell>
                       <TableCell>
-                        <Badge variant={admin.status === "active" ? "default" : "secondary"}>
-                          {admin.status === "active" ? (
+                        <Badge variant={user.status === "active" ? "default" : "secondary"}>
+                          {user.status === "active" ? (
                             <UserCheck className="w-3 h-3 mr-1" />
                           ) : (
                             <UserX className="w-3 h-3 mr-1" />
                           )}
-                          {admin.status}
+                          {user.status}
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
@@ -962,16 +962,16 @@ export function AdminManagement() {
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => openEditDialog(admin)}
-                            data-testid={`button-edit-admin-${admin._id}`}
+                            onClick={() => openEditDialog(user)}
+                            data-testid={`button-edit-user-${user._id}`}
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
                           <Button
                             variant="ghost"
                             size="icon"
-                            onClick={() => openDeleteDialog(admin)}
-                            data-testid={`button-delete-admin-${admin._id}`}
+                            onClick={() => openDeleteDialog(user)}
+                            data-testid={`button-delete-user-${user._id}`}
                           >
                             <Trash2 className="w-4 h-4 text-destructive" />
                           </Button>
@@ -985,8 +985,8 @@ export function AdminManagement() {
           ) : (
             <div className="text-center py-12">
               <Users className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">No admin accounts yet</p>
-              <p className="text-sm text-muted-foreground mt-1">Create your first admin to get started</p>
+              <p className="text-muted-foreground">No user accounts yet</p>
+              <p className="text-sm text-muted-foreground mt-1">Create your first user to get started</p>
             </div>
           )}
         </CardContent>
@@ -995,8 +995,8 @@ export function AdminManagement() {
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
         <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Edit Admin</DialogTitle>
-            <DialogDescription>Update admin account details</DialogDescription>
+            <DialogTitle>Edit User</DialogTitle>
+            <DialogDescription>Update user account details</DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
@@ -1067,22 +1067,22 @@ export function AdminManagement() {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Delete Admin</DialogTitle>
+            <DialogTitle>Delete User</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete the admin account for "{selectedAdmin?.name}"? This action cannot be undone.
+              Are you sure you want to delete the user account for "{selectedUser?.name}"? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={handleDelete} disabled={deleteMutation.isPending} data-testid="button-confirm-delete">
               {deleteMutation.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-              Delete Admin
+              Delete User
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </OwnerLayout>
+    </AdminLayout>
   );
 }
 
-export default OwnerDashboard;
+export default AdminDashboard;

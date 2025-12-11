@@ -14,7 +14,7 @@ export default function LoginPage() {
   const [, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [activeTab, setActiveTab] = useState<"owner" | "admin">("admin");
+  const [activeTab, setActiveTab] = useState<"admin" | "user">("user");
 
   const [formData, setFormData] = useState({
     username: "",
@@ -29,7 +29,7 @@ export default function LoginPage() {
     const result = await login(formData.username, formData.password, activeTab);
     
     if (result.success) {
-      navigate(activeTab === "owner" ? "/owner" : "/dashboard");
+      navigate(activeTab === "admin" ? "/admin" : "/dashboard");
     } else {
       setError(result.error || "Login failed");
     }
@@ -58,15 +58,15 @@ export default function LoginPage() {
               <CardDescription>Choose your account type to continue</CardDescription>
             </CardHeader>
             <CardContent>
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "owner" | "admin")}>
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "admin" | "user")}>
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                  <TabsTrigger value="admin" data-testid="tab-admin-login" className="gap-2">
+                  <TabsTrigger value="user" data-testid="tab-user-login" className="gap-2">
                     <User className="w-4 h-4" />
-                    Admin
+                    User
                   </TabsTrigger>
-                  <TabsTrigger value="owner" data-testid="tab-owner-login" className="gap-2">
+                  <TabsTrigger value="admin" data-testid="tab-admin-login" className="gap-2">
                     <Shield className="w-4 h-4" />
-                    Owner
+                    Admin
                   </TabsTrigger>
                 </TabsList>
 
@@ -78,13 +78,13 @@ export default function LoginPage() {
                     </div>
                   )}
 
-                  <TabsContent value="admin" className="mt-0 space-y-4">
+                  <TabsContent value="user" className="mt-0 space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="admin-username">Username</Label>
+                      <Label htmlFor="user-username">Username</Label>
                       <div className="relative">
                         <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
-                          id="admin-username"
+                          id="user-username"
                           type="text"
                           placeholder="Enter your username"
                           className="pl-10"
@@ -96,11 +96,11 @@ export default function LoginPage() {
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="admin-password">Password</Label>
+                      <Label htmlFor="user-password">Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
-                          id="admin-password"
+                          id="user-password"
                           type="password"
                           placeholder="Enter your password"
                           className="pl-10"
@@ -113,39 +113,39 @@ export default function LoginPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="owner" className="mt-0 space-y-4">
+                  <TabsContent value="admin" className="mt-0 space-y-4">
                     <div className="p-3 bg-accent/50 rounded-md text-sm text-muted-foreground flex items-start gap-2">
                       <Shield className="w-4 h-4 mt-0.5 text-primary shrink-0" />
-                      <span>Owner access provides full administrative control including admin management.</span>
+                      <span>Admin access provides full administrative control including user management.</span>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="owner-username">Owner Username</Label>
+                      <Label htmlFor="admin-username">Admin Username</Label>
                       <div className="relative">
                         <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
-                          id="owner-username"
+                          id="admin-username"
                           type="text"
-                          placeholder="Enter owner username"
+                          placeholder="Enter admin username"
                           className="pl-10"
                           value={formData.username}
                           onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                          data-testid="input-owner-username"
+                          data-testid="input-admin-username"
                           required
                         />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="owner-password">Owner Password</Label>
+                      <Label htmlFor="admin-password">Admin Password</Label>
                       <div className="relative">
                         <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input
-                          id="owner-password"
+                          id="admin-password"
                           type="password"
-                          placeholder="Enter owner password"
+                          placeholder="Enter admin password"
                           className="pl-10"
                           value={formData.password}
                           onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                          data-testid="input-owner-password"
+                          data-testid="input-admin-password"
                           required
                         />
                       </div>

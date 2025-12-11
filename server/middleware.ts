@@ -6,7 +6,7 @@ declare module "express-session" {
       id: string;
       username: string;
       name: string;
-      role: "owner" | "admin";
+      role: "admin" | "user";
     };
   }
 }
@@ -101,12 +101,12 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
-export function requireOwner(req: Request, res: Response, next: NextFunction) {
+export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   if (!req.session?.user) {
     return res.status(401).json({ success: false, error: "Unauthorized" });
   }
-  if (req.session.user.role !== "owner") {
-    return res.status(403).json({ success: false, error: "Forbidden - Owner access required" });
+  if (req.session.user.role !== "admin") {
+    return res.status(403).json({ success: false, error: "Forbidden - Admin access required" });
   }
   next();
 }

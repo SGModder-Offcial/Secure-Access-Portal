@@ -29,6 +29,7 @@ import {
   FileWarning,
   Lock,
   Globe,
+  Settings,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -72,6 +73,7 @@ export function AppSidebar() {
   const adminItems = [
     { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
     { title: "Manage Users", url: "/admin/users", icon: Users },
+    { title: "Settings", url: "/admin/settings", icon: Settings },
   ];
 
   const handleLogout = async () => {

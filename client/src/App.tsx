@@ -9,6 +9,7 @@ import LoginPage from "@/pages/login";
 import { DashboardHome, MobileSearchPage, EmailSearchPage, IdSearchPage } from "@/pages/dashboard";
 import { AdminDashboard, UserManagement } from "@/pages/admin-dashboard";
 import UserDetail from "@/pages/user-detail";
+import AdminSettings from "@/pages/admin-settings";
 import { Loader2 } from "lucide-react";
 
 function ProtectedRoute({ children, requireAdmin = false }: { children: React.ReactNode; requireAdmin?: boolean }) {
@@ -94,6 +95,11 @@ function Router() {
       <Route path="/admin/users/:id">
         <ProtectedRoute requireAdmin>
           <UserDetail />
+        </ProtectedRoute>
+      </Route>
+      <Route path="/admin/settings">
+        <ProtectedRoute requireAdmin>
+          <AdminSettings />
         </ProtectedRoute>
       </Route>
 

@@ -1,5 +1,6 @@
 import { useLocation, Link } from "wouter";
 import { useAuth } from "@/lib/auth-context";
+import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
   SidebarContent,
@@ -26,6 +27,7 @@ import {
   LayoutDashboard,
   Car,
   FileWarning,
+  Lock,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -35,23 +37,35 @@ export function AppSidebar() {
 
   const isAdmin = user?.role === "admin";
 
-  const searchItems = isAdmin
-    ? [
-        { title: "Mobile Search", url: "/admin?search=mobile", searchType: "mobile", icon: Phone },
-        { title: "Email Search", url: "/admin?search=email", searchType: "email", icon: Mail },
-        { title: "Aadhar Search", url: "/admin?search=aadhar", searchType: "aadhar", icon: CreditCard },
-        { title: "PAN Search", url: "/admin?search=pan", searchType: "pan", icon: CreditCard },
-        { title: "Vehicle Info", url: "/admin?search=vehicle-info", searchType: "vehicle-info", icon: Car },
-        { title: "Vehicle Challan", url: "/admin?search=vehicle-challan", searchType: "vehicle-challan", icon: FileWarning },
-      ]
-    : [
-        { title: "Mobile Search", url: "/dashboard?search=mobile", searchType: "mobile", icon: Phone },
-        { title: "Email Search", url: "/dashboard?search=email", searchType: "email", icon: Mail },
-        { title: "Aadhar Search", url: "/dashboard?search=aadhar", searchType: "aadhar", icon: CreditCard },
-        { title: "PAN Search", url: "/dashboard?search=pan", searchType: "pan", icon: CreditCard },
-        { title: "Vehicle Info", url: "/dashboard?search=vehicle-info", searchType: "vehicle-info", icon: Car },
-        { title: "Vehicle Challan", url: "/dashboard?search=vehicle-challan", searchType: "vehicle-challan", icon: FileWarning },
-      ];
+  // Fetch user features for non-admin users
+  const { data: featuresData } = useQuery<{ success: boolean; features: string[] }>({
+    queryKey: ["/api/user/features"],
+    enabled: !isAdmin,
+  });
+
+  const userFeatures = featuresData?.features || [];
+
+  const allSearchItems = [
+    { title: "Mobile Search", searchType: "mobile", icon: Phone },
+    { title: "Email Search", searchType: "email", icon: Mail },
+    { title: "Aadhar Search", searchType: "aadhar", icon: CreditCard },
+    { title: "PAN Search", searchType: "pan", icon: CreditCard },
+    { title: "Vehicle Info", searchType: "vehicle-info", icon: Car },
+    { title: "Vehicle Challan", searchType: "vehicle-challan", icon: FileWarning },
+  ];
+
+  const getUrl = (searchType: string) => 
+    isAdmin ? `/admin?search=${searchType}` : `/dashboard?search=${searchType}`;
+
+  // For admin, all features are enabled
+  // For users, separate enabled and disabled features
+  const enabledItems = isAdmin 
+    ? allSearchItems 
+    : allSearchItems.filter(item => userFeatures.includes(item.searchType));
+  
+  const disabledItems = isAdmin 
+    ? [] 
+    : allSearchItems.filter(item => !userFeatures.includes(item.searchType));
 
   const adminItems = [
     { title: "Dashboard", url: "/admin", icon: LayoutDashboard },
@@ -117,31 +131,61 @@ export function AppSidebar() {
           </SidebarGroup>
         )}
 
-        <SidebarGroup>
-          <SidebarGroupLabel className="flex items-center gap-2">
-            <Search className="w-3 h-3" />
-            Search Services
-          </SidebarGroupLabel>
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {searchItems.map((item) => {
-                const isActive = window.location.search.includes(`search=${item.searchType}`);
-                return (
+        {/* Enabled Features */}
+        {enabledItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="flex items-center gap-2">
+              <Search className="w-3 h-3" />
+              Search Services
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {enabledItems.map((item) => {
+                  const isActive = window.location.search.includes(`search=${item.searchType}`);
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton
+                        isActive={isActive}
+                        onClick={() => handleSearchClick(getUrl(item.searchType), item.searchType)}
+                        data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+                      >
+                        <item.icon className="w-4 h-4" />
+                        <span>{item.title}</span>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
+
+        {/* Disabled Features - shown at bottom */}
+        {disabledItems.length > 0 && (
+          <SidebarGroup>
+            <SidebarGroupLabel className="flex items-center gap-2 text-muted-foreground/60">
+              <Lock className="w-3 h-3" />
+              Locked Features
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {disabledItems.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
-                      isActive={isActive}
-                      onClick={() => handleSearchClick(item.url, item.searchType)}
-                      data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}`}
+                      disabled
+                      className="opacity-50 cursor-not-allowed"
+                      data-testid={`link-${item.title.toLowerCase().replace(/\s+/g, '-')}-disabled`}
                     >
-                      <item.icon className="w-4 h-4" />
-                      <span>{item.title}</span>
+                      <item.icon className="w-4 h-4 text-muted-foreground" />
+                      <span className="text-muted-foreground">{item.title}</span>
+                      <Lock className="w-3 h-3 ml-auto text-muted-foreground/60" />
                     </SidebarMenuButton>
                   </SidebarMenuItem>
-                );
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">

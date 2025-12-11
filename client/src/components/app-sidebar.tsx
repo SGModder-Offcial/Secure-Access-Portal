@@ -28,6 +28,7 @@ import {
   Car,
   FileWarning,
   Lock,
+  Globe,
 } from "lucide-react";
 
 export function AppSidebar() {
@@ -52,6 +53,7 @@ export function AppSidebar() {
     { title: "PAN Search", searchType: "pan", icon: CreditCard },
     { title: "Vehicle Info", searchType: "vehicle-info", icon: Car },
     { title: "Vehicle Challan", searchType: "vehicle-challan", icon: FileWarning },
+    { title: "IP Lookup", searchType: "ip", icon: Globe },
   ];
 
   const getUrl = (searchType: string) => 

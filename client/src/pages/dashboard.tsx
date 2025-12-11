@@ -400,14 +400,14 @@ export function DashboardHome() {
 
   const userFeatures = featuresData?.features || [];
 
-  const getSearchParam = (): ServiceType => {
+  const getSearchParam = (): ServiceType | null => {
     const params = new URLSearchParams(window.location.search);
     const param = params.get("search");
     const validTypes: ServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
-    return validTypes.includes(param as ServiceType) ? (param as ServiceType) : "mobile";
+    return validTypes.includes(param as ServiceType) ? (param as ServiceType) : null;
   };
   
-  const [activeService, setActiveService] = useState<ServiceType>(getSearchParam());
+  const [activeService, setActiveService] = useState<ServiceType | null>(getSearchParam());
   const [query, setQuery] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResultItem[]>([]);
@@ -415,8 +415,6 @@ export function DashboardHome() {
   const [error, setError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const { toast } = useToast();
-
-  const isVehicleSearch = activeService === "vehicle-info" || activeService === "vehicle-challan";
 
   const allServices = [
     { id: "mobile" as const, label: "Mobile", icon: Phone, placeholder: "Enter mobile number (e.g., 9161570798)" },
@@ -428,12 +426,16 @@ export function DashboardHome() {
   ];
 
   const services = allServices.filter(s => userFeatures.includes(s.id));
+  const isVehicleSearch = activeService === "vehicle-info" || activeService === "vehicle-challan";
+  const effectiveActiveService = activeService || services[0]?.id || "mobile";
   
   useEffect(() => {
-    if (services.length > 0 && !services.find(s => s.id === activeService)) {
-      setActiveService(services[0].id);
+    if (services.length > 0) {
+      if (activeService === null || !services.find(s => s.id === activeService)) {
+        setActiveService(services[0].id);
+      }
     }
-  }, [userFeatures]);
+  }, [userFeatures, services.length]);
 
   useEffect(() => {
     const handleSearchTypeChange = (e: Event) => {
@@ -459,7 +461,7 @@ export function DashboardHome() {
     };
   }, [userFeatures]);
 
-  const activeServiceData = services.find((s) => s.id === activeService) || allServices[0];
+  const activeServiceData = services.find((s) => s.id === effectiveActiveService) || allServices.find((s) => s.id === effectiveActiveService) || allServices[0];
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -474,7 +476,7 @@ export function DashboardHome() {
     setHasSearched(true);
 
     try {
-      const res = await fetch(`/api/search/${activeService}?query=${encodeURIComponent(query.trim())}`, {
+      const res = await fetch(`/api/search/${effectiveActiveService}?query=${encodeURIComponent(query.trim())}`, {
         credentials: "include",
       });
       const data = await res.json();
@@ -531,12 +533,14 @@ export function DashboardHome() {
   };
 
   const handleServiceChange = (value: string) => {
-    setActiveService(value as ServiceType);
-    setQuery("");
-    setResults([]);
-    setVehicleData(null);
-    setError("");
-    setHasSearched(false);
+    if (userFeatures.includes(value)) {
+      setActiveService(value as ServiceType);
+      setQuery("");
+      setResults([]);
+      setVehicleData(null);
+      setError("");
+      setHasSearched(false);
+    }
   };
 
   const style = {
@@ -596,7 +600,7 @@ export function DashboardHome() {
                     </div>
                   ) : (
                     <>
-                      <Select value={activeService} onValueChange={handleServiceChange}>
+                      <Select value={effectiveActiveService} onValueChange={handleServiceChange}>
                         <SelectTrigger className="w-full" data-testid="select-service">
                           <SelectValue>
                             <div className="flex items-center gap-2">

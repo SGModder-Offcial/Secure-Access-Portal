@@ -45,6 +45,10 @@ import {
   Building,
   CircleDollarSign,
   Eye,
+  Globe,
+  Clock,
+  Server,
+  Network,
 } from "lucide-react";
 import { Link } from "wouter";
 
@@ -84,7 +88,80 @@ function formatAddress(addr: string): string {
   return addr.replace(/^!+/, "").replace(/!+/g, ", ").replace(/,\s*,/g, ",").replace(/,\s*$/g, "").replace(/^\s*,\s*/g, "").trim();
 }
 
-type AdminServiceType = "mobile" | "email" | "aadhar" | "pan" | "vehicle-info" | "vehicle-challan";
+type AdminServiceType = "mobile" | "email" | "aadhar" | "pan" | "vehicle-info" | "vehicle-challan" | "ip";
+
+function AdminIpResultDisplay({ 
+  data, 
+  copyToClipboard, 
+  copiedField 
+}: { 
+  data: any; 
+  copyToClipboard: (value: string, label: string) => void;
+  copiedField: string | null;
+}) {
+  const ipFields = [
+    { key: "query", label: "IP Address", icon: <Globe className="w-3.5 h-3.5" /> },
+    { key: "country", label: "Country", icon: <MapPin className="w-3.5 h-3.5" /> },
+    { key: "countryCode", label: "Country Code", icon: <Hash className="w-3.5 h-3.5" /> },
+    { key: "regionName", label: "Region", icon: <MapPin className="w-3.5 h-3.5" /> },
+    { key: "city", label: "City", icon: <Building className="w-3.5 h-3.5" /> },
+    { key: "zip", label: "ZIP Code", icon: <Hash className="w-3.5 h-3.5" /> },
+    { key: "lat", label: "Latitude", icon: <MapPin className="w-3.5 h-3.5" /> },
+    { key: "lon", label: "Longitude", icon: <MapPin className="w-3.5 h-3.5" /> },
+    { key: "timezone", label: "Timezone", icon: <Clock className="w-3.5 h-3.5" /> },
+    { key: "isp", label: "ISP", icon: <Network className="w-3.5 h-3.5" /> },
+    { key: "org", label: "Organization", icon: <Server className="w-3.5 h-3.5" /> },
+    { key: "as", label: "AS Number", icon: <Network className="w-3.5 h-3.5" /> },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="py-3 px-4 bg-muted/30">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Globe className="w-4 h-4" />
+            IP Geolocation Data
+          </CardTitle>
+          <Badge variant="secondary" className="text-xs">
+            {data.country}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
+          {ipFields.map(({ key, label, icon }) => {
+            const value = data[key];
+            if (value === undefined || value === null || value === "") return null;
+            
+            return (
+              <div key={key} className="flex items-start gap-3 px-4 py-3">
+                <div className="flex items-center gap-2 text-muted-foreground shrink-0 w-28">
+                  {icon}
+                  <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-mono break-all">{String(value)}</p>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="shrink-0 h-7 w-7" 
+                  onClick={() => copyToClipboard(String(value), label)}
+                >
+                  {copiedField === String(value) ? (
+                    <Check className="w-3.5 h-3.5 text-green-500" />
+                  ) : (
+                    <Copy className="w-3.5 h-3.5" />
+                  )}
+                </Button>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function AdminVehicleResultDisplay({ 
   data, 
@@ -270,7 +347,7 @@ function AdminSearchSection() {
   const getSearchParam = (): AdminServiceType => {
     const params = new URLSearchParams(window.location.search);
     const param = params.get("search");
-    const validTypes: AdminServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
+    const validTypes: AdminServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan", "ip"];
     return validTypes.includes(param as AdminServiceType) ? (param as AdminServiceType) : "mobile";
   };
   
@@ -280,12 +357,13 @@ function AdminSearchSection() {
     const handleSearchTypeChange = (e: Event) => {
       const customEvent = e as CustomEvent;
       const newType = customEvent.detail?.searchType;
-      const validTypes: AdminServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
+      const validTypes: AdminServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan", "ip"];
       if (validTypes.includes(newType)) {
         setActiveService(newType);
         setQuery("");
         setResults([]);
         setVehicleData(null);
+        setIpData(null);
         setError("");
         setHasSearched(false);
       }
@@ -303,12 +381,14 @@ function AdminSearchSection() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [vehicleData, setVehicleData] = useState<any>(null);
+  const [ipData, setIpData] = useState<any>(null);
   const [error, setError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const { toast } = useToast();
 
   const isVehicleSearch = activeService === "vehicle-info" || activeService === "vehicle-challan";
+  const isIpSearch = activeService === "ip";
 
   const services = [
     { id: "mobile" as const, label: "Mobile", icon: Phone, placeholder: "Enter mobile number" },
@@ -317,6 +397,7 @@ function AdminSearchSection() {
     { id: "pan" as const, label: "PAN", icon: CreditCard, placeholder: "Enter PAN number" },
     { id: "vehicle-info" as const, label: "Vehicle", icon: Car, placeholder: "Enter vehicle number (e.g., UP32QP0001)" },
     { id: "vehicle-challan" as const, label: "Challan", icon: FileWarning, placeholder: "Enter vehicle number (e.g., UP32QP0001)" },
+    { id: "ip" as const, label: "IP Lookup", icon: Globe, placeholder: "Enter IP address (e.g., 24.48.0.1)" },
   ];
 
   const activeServiceData = services.find((s) => s.id === activeService)!;
@@ -329,6 +410,7 @@ function AdminSearchSection() {
     setError("");
     setResults([]);
     setVehicleData(null);
+    setIpData(null);
     setIsLoading(true);
     setHasSearched(true);
 
@@ -345,6 +427,13 @@ function AdminSearchSection() {
             toast({ title: "Success", description: "Vehicle data found" });
           } else {
             setError("There are some problem please contact developer");
+          }
+        } else if (isIpSearch) {
+          if (data.data && data.data.status === "success") {
+            setIpData(data.data);
+            toast({ title: "Success", description: "IP location data found" });
+          } else {
+            setError(data.error || "IP lookup failed");
           }
         } else {
           if (Array.isArray(data.data)) {
@@ -369,7 +458,7 @@ function AdminSearchSection() {
           }
         }
       } else {
-        setError("There are some problem please contact developer");
+        setError(data.error || "There are some problem please contact developer");
       }
     } catch {
       setError("There are some problem please contact developer");
@@ -388,6 +477,7 @@ function AdminSearchSection() {
   const handleServiceChange = (value: string) => {
     setActiveService(value as AdminServiceType);
     setQuery("");
+    setIpData(null);
     setResults([]);
     setVehicleData(null);
     setError("");
@@ -456,7 +546,13 @@ function AdminSearchSection() {
           </div>
         )}
 
-        {hasSearched && !isLoading && !error && results.length > 0 && !isVehicleSearch && (
+        {hasSearched && !isLoading && !error && ipData && isIpSearch && (
+          <div className="space-y-4 pt-4 border-t">
+            <AdminIpResultDisplay data={ipData} copyToClipboard={copyToClipboard} copiedField={copiedField} />
+          </div>
+        )}
+
+        {hasSearched && !isLoading && !error && results.length > 0 && !isVehicleSearch && !isIpSearch && (
           <div className="space-y-4 pt-4 border-t">
             <div className="flex items-center justify-between">
               <h3 className="text-sm font-semibold">Results Found</h3>
@@ -533,7 +629,7 @@ function AdminSearchSection() {
           </div>
         )}
 
-        {hasSearched && !isLoading && !error && results.length === 0 && !vehicleData && (
+        {hasSearched && !isLoading && !error && results.length === 0 && !vehicleData && !ipData && (
           <div className="py-8 text-center">
             <Search className="w-10 h-10 mx-auto text-muted-foreground mb-3" />
             <p className="text-muted-foreground">No results found</p>

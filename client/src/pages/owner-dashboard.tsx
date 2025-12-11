@@ -576,7 +576,7 @@ function OwnerLayout({ children, title, subtitle }: OwnerLayoutProps) {
               <ThemeToggle />
             </div>
           </header>
-          <main className="flex-1 overflow-auto p-4 md:p-6 pt-6">
+          <main className="flex-1 overflow-auto p-4 md:p-6">
             {children}
           </main>
         </div>

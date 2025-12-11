@@ -5,7 +5,7 @@ import MemoryStore from "memorystore";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { connectDB } from "./db";
-import { User, SearchHistory, ALL_FEATURES } from "./models";
+import { User, SearchHistory, GlobalSettings, ALL_FEATURES } from "./models";
 import { requireAuth, requireAdmin, detectVPN, securityHeaders, preventInterception, apiProtection } from "./middleware";
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "";
@@ -404,19 +404,69 @@ export async function registerRoutes(
   app.get("/api/user/features", requireAuth, async (req: Request, res: Response) => {
     try {
       const userId = req.session?.user?.id;
+      
+      // Get global settings to filter features
+      const globalSettings = await GlobalSettings.findOne({ key: "global" });
+      const globallyEnabled = globalSettings?.enabledFeatures || [...ALL_FEATURES];
+      
       if (!userId || userId === "admin") {
-        return res.json({ success: true, features: ALL_FEATURES });
+        return res.json({ success: true, features: globallyEnabled });
       }
 
       const user = await User.findById(userId).select("features");
       if (!user) {
-        return res.json({ success: true, features: ALL_FEATURES });
+        return res.json({ success: true, features: globallyEnabled });
       }
 
-      return res.json({ success: true, features: user.features || ALL_FEATURES });
+      // User can only access features that are both assigned to them AND globally enabled
+      const userFeatures = user.features || [...ALL_FEATURES];
+      const effectiveFeatures = userFeatures.filter(f => globallyEnabled.includes(f));
+
+      return res.json({ success: true, features: effectiveFeatures, globalFeatures: globallyEnabled });
     } catch (error) {
       console.error("Get user features error:", error);
-      return res.json({ success: true, features: ALL_FEATURES });
+      return res.json({ success: true, features: [...ALL_FEATURES] });
+    }
+  });
+
+  // Global Settings API - Admin only
+  app.get("/api/admin/settings/global", requireAdmin, detectVPN, async (req: Request, res: Response) => {
+    try {
+      let settings = await GlobalSettings.findOne({ key: "global" });
+      if (!settings) {
+        // Create default settings if not exists
+        settings = await GlobalSettings.create({
+          key: "global",
+          enabledFeatures: [...ALL_FEATURES],
+        });
+      }
+      return res.json({ success: true, settings, allFeatures: ALL_FEATURES });
+    } catch (error) {
+      console.error("Get global settings error:", error);
+      return res.status(500).json({ success: false, error: "Failed to fetch settings" });
+    }
+  });
+
+  app.put("/api/admin/settings/global", requireAdmin, detectVPN, async (req: Request, res: Response) => {
+    try {
+      const { enabledFeatures } = req.body;
+
+      if (!Array.isArray(enabledFeatures)) {
+        return res.status(400).json({ success: false, error: "enabledFeatures must be an array" });
+      }
+
+      const validFeatures = enabledFeatures.filter(f => ALL_FEATURES.includes(f));
+
+      const settings = await GlobalSettings.findOneAndUpdate(
+        { key: "global" },
+        { enabledFeatures: validFeatures, updatedAt: new Date() },
+        { new: true, upsert: true }
+      );
+
+      return res.json({ success: true, settings });
+    } catch (error) {
+      console.error("Update global settings error:", error);
+      return res.status(500).json({ success: false, error: "Failed to update settings" });
     }
   });
 

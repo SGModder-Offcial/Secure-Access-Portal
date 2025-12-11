@@ -44,5 +44,18 @@ const searchHistorySchema = new Schema<ISearchHistory>({
   timestamp: { type: Date, default: Date.now },
 });
 
+export interface IGlobalSettings extends Document {
+  key: string;
+  enabledFeatures: FeatureType[];
+  updatedAt: Date;
+}
+
+const globalSettingsSchema = new Schema<IGlobalSettings>({
+  key: { type: String, required: true, unique: true, default: "global" },
+  enabledFeatures: { type: [String], default: ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan", "ip"] },
+  updatedAt: { type: Date, default: Date.now },
+});
+
 export const User = mongoose.models.User || mongoose.model<IUser>("User", userSchema);
 export const SearchHistory = mongoose.models.SearchHistory || mongoose.model<ISearchHistory>("SearchHistory", searchHistorySchema);
+export const GlobalSettings = mongoose.models.GlobalSettings || mongoose.model<IGlobalSettings>("GlobalSettings", globalSettingsSchema);

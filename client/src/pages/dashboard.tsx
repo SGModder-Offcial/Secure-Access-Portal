@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -9,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import {
   Shield,
@@ -31,6 +33,7 @@ import {
   Fuel,
   Building,
   CircleDollarSign,
+  Lock,
 } from "lucide-react";
 
 interface SearchResultItem {
@@ -391,6 +394,12 @@ function VehicleResultDisplay({ data, type }: { data: any; type: "vehicle-info" 
 }
 
 export function DashboardHome() {
+  const { data: featuresData, isLoading: featuresLoading } = useQuery<{ success: boolean; features: string[] }>({
+    queryKey: ["/api/user/features"],
+  });
+
+  const userFeatures = featuresData?.features || [];
+
   const getSearchParam = (): ServiceType => {
     const params = new URLSearchParams(window.location.search);
     const param = params.get("search");
@@ -409,12 +418,29 @@ export function DashboardHome() {
 
   const isVehicleSearch = activeService === "vehicle-info" || activeService === "vehicle-challan";
 
+  const allServices = [
+    { id: "mobile" as const, label: "Mobile", icon: Phone, placeholder: "Enter mobile number (e.g., 9161570798)" },
+    { id: "email" as const, label: "Email", icon: Mail, placeholder: "Enter email address" },
+    { id: "aadhar" as const, label: "Aadhar", icon: CreditCard, placeholder: "Enter Aadhar number (e.g., 123456789012)" },
+    { id: "pan" as const, label: "PAN", icon: CreditCard, placeholder: "Enter PAN number (e.g., ABCDE1234F)" },
+    { id: "vehicle-info" as const, label: "Vehicle", icon: Car, placeholder: "Enter vehicle number (e.g., UP32QP0001)" },
+    { id: "vehicle-challan" as const, label: "Challan", icon: FileWarning, placeholder: "Enter vehicle number (e.g., UP32QP0001)" },
+  ];
+
+  const services = allServices.filter(s => userFeatures.includes(s.id));
+  
+  useEffect(() => {
+    if (services.length > 0 && !services.find(s => s.id === activeService)) {
+      setActiveService(services[0].id);
+    }
+  }, [userFeatures]);
+
   useEffect(() => {
     const handleSearchTypeChange = (e: Event) => {
       const customEvent = e as CustomEvent;
       const newType = customEvent.detail?.searchType;
       const validTypes: ServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
-      if (validTypes.includes(newType)) {
+      if (validTypes.includes(newType) && userFeatures.includes(newType)) {
         setActiveService(newType);
         setQuery("");
         setResults([]);
@@ -431,18 +457,9 @@ export function DashboardHome() {
       window.removeEventListener('searchTypeChange', handleSearchTypeChange);
       window.removeEventListener('popstate', () => setActiveService(getSearchParam()));
     };
-  }, []);
+  }, [userFeatures]);
 
-  const services = [
-    { id: "mobile" as const, label: "Mobile", icon: Phone, placeholder: "Enter mobile number (e.g., 9161570798)" },
-    { id: "email" as const, label: "Email", icon: Mail, placeholder: "Enter email address" },
-    { id: "aadhar" as const, label: "Aadhar", icon: CreditCard, placeholder: "Enter Aadhar number (e.g., 123456789012)" },
-    { id: "pan" as const, label: "PAN", icon: CreditCard, placeholder: "Enter PAN number (e.g., ABCDE1234F)" },
-    { id: "vehicle-info" as const, label: "Vehicle", icon: Car, placeholder: "Enter vehicle number (e.g., UP32QP0001)" },
-    { id: "vehicle-challan" as const, label: "Challan", icon: FileWarning, placeholder: "Enter vehicle number (e.g., UP32QP0001)" },
-  ];
-
-  const activeServiceData = services.find((s) => s.id === activeService)!;
+  const activeServiceData = services.find((s) => s.id === activeService) || allServices[0];
 
   const handleSearch = async () => {
     if (!query.trim()) {
@@ -562,59 +579,78 @@ export function DashboardHome() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <Select value={activeService} onValueChange={handleServiceChange}>
-                    <SelectTrigger className="w-full" data-testid="select-service">
-                      <SelectValue>
-                        <div className="flex items-center gap-2">
-                          <activeServiceData.icon className="w-4 h-4" />
-                          <span>{activeServiceData.label}</span>
+                  {featuresLoading ? (
+                    <div className="space-y-4">
+                      <Skeleton className="h-10 w-full" />
+                      <Skeleton className="h-10 w-full" />
+                    </div>
+                  ) : services.length === 0 ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-center">
+                      <div className="p-3 rounded-full bg-muted mb-4">
+                        <Lock className="w-8 h-8 text-muted-foreground" />
+                      </div>
+                      <h3 className="font-semibold text-lg mb-2">No Access</h3>
+                      <p className="text-sm text-muted-foreground max-w-sm">
+                        You don't have access to any search features. Please contact the administrator to get access.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <Select value={activeService} onValueChange={handleServiceChange}>
+                        <SelectTrigger className="w-full" data-testid="select-service">
+                          <SelectValue>
+                            <div className="flex items-center gap-2">
+                              <activeServiceData.icon className="w-4 h-4" />
+                              <span>{activeServiceData.label}</span>
+                            </div>
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {services.map((service) => (
+                            <SelectItem key={service.id} value={service.id} data-testid={`option-${service.id}`}>
+                              <div className="flex items-center gap-2">
+                                <service.icon className="w-4 h-4" />
+                                <span>{service.label}</span>
+                              </div>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+
+                      <div className="flex gap-2">
+                        <div className="relative flex-1">
+                          <activeServiceData.icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input
+                            placeholder={activeServiceData.placeholder}
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            onKeyPress={handleKeyPress}
+                            disabled={isLoading}
+                            className="pl-10"
+                            data-testid="input-search-query"
+                          />
                         </div>
-                      </SelectValue>
-                    </SelectTrigger>
-                    <SelectContent>
-                      {services.map((service) => (
-                        <SelectItem key={service.id} value={service.id} data-testid={`option-${service.id}`}>
-                          <div className="flex items-center gap-2">
-                            <service.icon className="w-4 h-4" />
-                            <span>{service.label}</span>
-                          </div>
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                        <Button
+                          onClick={handleSearch}
+                          disabled={isLoading}
+                          className="px-6"
+                          data-testid="button-search"
+                        >
+                          {isLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <Search className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </div>
 
-                  <div className="flex gap-2">
-                    <div className="relative flex-1">
-                      <activeServiceData.icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                      <Input
-                        placeholder={activeServiceData.placeholder}
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        onKeyPress={handleKeyPress}
-                        disabled={isLoading}
-                        className="pl-10"
-                        data-testid="input-search-query"
-                      />
-                    </div>
-                    <Button
-                      onClick={handleSearch}
-                      disabled={isLoading}
-                      className="px-6"
-                      data-testid="button-search"
-                    >
-                      {isLoading ? (
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                      ) : (
-                        <Search className="w-4 h-4" />
+                      {error && (
+                        <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
+                          <AlertCircle className="w-4 h-4 shrink-0" />
+                          <span>{error}</span>
+                        </div>
                       )}
-                    </Button>
-                  </div>
-
-                  {error && (
-                    <div className="flex items-center gap-2 p-3 text-sm text-destructive bg-destructive/10 rounded-md">
-                      <AlertCircle className="w-4 h-4 shrink-0" />
-                      <span>{error}</span>
-                    </div>
+                    </>
                   )}
                 </CardContent>
               </Card>

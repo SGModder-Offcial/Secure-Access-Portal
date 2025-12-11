@@ -42,9 +42,19 @@ Preferred communication style: Simple, everyday language.
 - **Search Endpoints**: `/api/search/mobile`, `/api/search/email`, `/api/search/aadhar`, `/api/search/pan`
 - **Vehicle Search Endpoints**: `/api/search/vehicle-info`, `/api/search/vehicle-challan`
 - **Admin Management**: Owner-only endpoints for CRUD operations on admin users
+- **Feature Management Endpoints**:
+  - `GET /api/admin/users/:id/details` - Get user details with search stats and history
+  - `PUT /api/admin/users/:id/features` - Update user's allowed features
+  - `GET /api/user/features` - Get current user's allowed features
 - **External APIs**: 
   - Proxies search requests to `https://numinfoapi.vercel.app`
   - Vehicle data from `https://osint-apis.zerovault.workers.dev` (challan and vehicle info)
+
+### Feature Management System
+- **User Features**: Each user has a `features` array storing allowed search types
+- **Available Features**: mobile, email, aadhar, pan, vehicle-info, vehicle-challan
+- **Admin Control**: Admins can view/edit user features via user detail page (`/admin/users/:id`)
+- **User Dashboard**: Only shows search services the user has access to; displays "No Access" message if no features assigned
 
 ### Project Structure
 ```

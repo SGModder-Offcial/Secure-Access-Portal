@@ -789,7 +789,7 @@ export function AdminManagement() {
                 Add Admin
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto">
               <DialogHeader>
                 <DialogTitle>Create New Admin</DialogTitle>
                 <DialogDescription>Add a new admin account to the system</DialogDescription>
@@ -993,7 +993,7 @@ export function AdminManagement() {
       </Card>
 
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Admin</DialogTitle>
             <DialogDescription>Update admin account details</DialogDescription>

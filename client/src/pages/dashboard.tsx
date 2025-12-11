@@ -34,6 +34,10 @@ import {
   Building,
   CircleDollarSign,
   Lock,
+  Globe,
+  Clock,
+  Server,
+  Network,
 } from "lucide-react";
 
 interface SearchResultItem {
@@ -162,7 +166,86 @@ function ResultCard({ result, index }: { result: SearchResultItem; index: number
   );
 }
 
-type ServiceType = "mobile" | "email" | "aadhar" | "pan" | "vehicle-info" | "vehicle-challan";
+type ServiceType = "mobile" | "email" | "aadhar" | "pan" | "vehicle-info" | "vehicle-challan" | "ip";
+
+function IpResultDisplay({ data }: { data: any }) {
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const { toast } = useToast();
+
+  const copyToClipboard = async (value: string, field: string) => {
+    await navigator.clipboard.writeText(value);
+    setCopiedField(field);
+    toast({ title: "Copied!", description: `${field} copied to clipboard` });
+    setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const ipFields = [
+    { key: "query", label: "IP Address", icon: <Globe className="w-3.5 h-3.5" /> },
+    { key: "country", label: "Country", icon: <MapPin className="w-3.5 h-3.5" /> },
+    { key: "countryCode", label: "Country Code", icon: <Hash className="w-3.5 h-3.5" /> },
+    { key: "regionName", label: "Region", icon: <MapPin className="w-3.5 h-3.5" /> },
+    { key: "city", label: "City", icon: <Building className="w-3.5 h-3.5" /> },
+    { key: "zip", label: "ZIP Code", icon: <Hash className="w-3.5 h-3.5" /> },
+    { key: "lat", label: "Latitude", icon: <MapPin className="w-3.5 h-3.5" /> },
+    { key: "lon", label: "Longitude", icon: <MapPin className="w-3.5 h-3.5" /> },
+    { key: "timezone", label: "Timezone", icon: <Clock className="w-3.5 h-3.5" /> },
+    { key: "isp", label: "ISP", icon: <Network className="w-3.5 h-3.5" /> },
+    { key: "org", label: "Organization", icon: <Server className="w-3.5 h-3.5" /> },
+    { key: "as", label: "AS Number", icon: <Network className="w-3.5 h-3.5" /> },
+  ];
+
+  return (
+    <Card>
+      <CardHeader className="py-3 px-4 bg-muted/30">
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="text-base flex items-center gap-2">
+            <Globe className="w-4 h-4" />
+            IP Geolocation Data
+          </CardTitle>
+          <Badge variant="secondary" className="text-xs">
+            {data.country}
+          </Badge>
+        </div>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-border">
+          {ipFields.map(({ key, label, icon }) => {
+            const value = data[key];
+            if (value === undefined || value === null || value === "") return null;
+            
+            const fieldId = `ip-${key}`;
+            return (
+              <div key={key} className="flex items-start gap-3 px-4 py-3 group">
+                <div className="flex items-center gap-2 text-muted-foreground shrink-0 w-28">
+                  {icon}
+                  <span className="text-xs font-medium uppercase tracking-wide">{label}</span>
+                </div>
+                <div className="flex-1 min-w-0 flex items-center gap-2">
+                  <p className="text-sm font-mono break-all" data-testid={`text-${fieldId}`}>
+                    {String(value)}
+                  </p>
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                    onClick={() => copyToClipboard(String(value), label)}
+                    data-testid={`button-copy-${fieldId}`}
+                  >
+                    {copiedField === label ? (
+                      <Check className="w-3.5 h-3.5 text-green-500" />
+                    ) : (
+                      <Copy className="w-3.5 h-3.5" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
 
 function VehicleResultDisplay({ data, type }: { data: any; type: "vehicle-info" | "vehicle-challan" }) {
   const [copiedField, setCopiedField] = useState<string | null>(null);
@@ -403,7 +486,7 @@ export function DashboardHome() {
   const getSearchParam = (): ServiceType | null => {
     const params = new URLSearchParams(window.location.search);
     const param = params.get("search");
-    const validTypes: ServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
+    const validTypes: ServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan", "ip"];
     return validTypes.includes(param as ServiceType) ? (param as ServiceType) : null;
   };
   
@@ -412,6 +495,7 @@ export function DashboardHome() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<SearchResultItem[]>([]);
   const [vehicleData, setVehicleData] = useState<any>(null);
+  const [ipData, setIpData] = useState<any>(null);
   const [error, setError] = useState("");
   const [hasSearched, setHasSearched] = useState(false);
   const { toast } = useToast();
@@ -423,10 +507,12 @@ export function DashboardHome() {
     { id: "pan" as const, label: "PAN", icon: CreditCard, placeholder: "Enter PAN number (e.g., ABCDE1234F)" },
     { id: "vehicle-info" as const, label: "Vehicle", icon: Car, placeholder: "Enter vehicle number (e.g., UP32QP0001)" },
     { id: "vehicle-challan" as const, label: "Challan", icon: FileWarning, placeholder: "Enter vehicle number (e.g., UP32QP0001)" },
+    { id: "ip" as const, label: "IP Lookup", icon: Globe, placeholder: "Enter IP address (e.g., 24.48.0.1)" },
   ];
 
   const services = allServices.filter(s => userFeatures.includes(s.id));
   const isVehicleSearch = activeService === "vehicle-info" || activeService === "vehicle-challan";
+  const isIpSearch = activeService === "ip";
   const effectiveActiveService = activeService || services[0]?.id || "mobile";
   
   useEffect(() => {
@@ -441,12 +527,13 @@ export function DashboardHome() {
     const handleSearchTypeChange = (e: Event) => {
       const customEvent = e as CustomEvent;
       const newType = customEvent.detail?.searchType;
-      const validTypes: ServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"];
+      const validTypes: ServiceType[] = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan", "ip"];
       if (validTypes.includes(newType) && userFeatures.includes(newType)) {
         setActiveService(newType);
         setQuery("");
         setResults([]);
         setVehicleData(null);
+        setIpData(null);
         setError("");
         setHasSearched(false);
       }
@@ -472,6 +559,7 @@ export function DashboardHome() {
     setError("");
     setResults([]);
     setVehicleData(null);
+    setIpData(null);
     setIsLoading(true);
     setHasSearched(true);
 
@@ -492,6 +580,14 @@ export function DashboardHome() {
             toast({ title: "Success", description: "Vehicle data found" });
           } else {
             setError("There are some problem please contact developer");
+          }
+        } else if (isIpSearch) {
+          // Handle IP search results
+          if (data.data && data.data.status === "success") {
+            setIpData(data.data);
+            toast({ title: "Success", description: "IP location data found" });
+          } else {
+            setError(data.error || "IP lookup failed");
           }
         } else {
           // Handle regular searches
@@ -517,7 +613,7 @@ export function DashboardHome() {
           }
         }
       } else {
-        setError("There are some problem please contact developer");
+        setError(data.error || "There are some problem please contact developer");
       }
     } catch {
       setError("There are some problem please contact developer");
@@ -538,6 +634,7 @@ export function DashboardHome() {
       setQuery("");
       setResults([]);
       setVehicleData(null);
+      setIpData(null);
       setError("");
       setHasSearched(false);
     }
@@ -666,7 +763,11 @@ export function DashboardHome() {
                 />
               )}
 
-              {hasSearched && !isLoading && !error && results.length > 0 && !isVehicleSearch && (
+              {hasSearched && !isLoading && !error && ipData && isIpSearch && (
+                <IpResultDisplay data={ipData} />
+              )}
+
+              {hasSearched && !isLoading && !error && results.length > 0 && !isVehicleSearch && !isIpSearch && (
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <h2 className="text-lg font-semibold">
@@ -739,7 +840,7 @@ export function DashboardHome() {
                 </div>
               )}
 
-              {hasSearched && !isLoading && !error && results.length === 0 && !vehicleData && (
+              {hasSearched && !isLoading && !error && results.length === 0 && !vehicleData && !ipData && (
                 <Card>
                   <CardContent className="py-12 text-center">
                     <Search className="w-12 h-12 mx-auto text-muted-foreground mb-4" />

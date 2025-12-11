@@ -532,7 +532,7 @@ export function DashboardHome() {
       <div className="flex h-screen w-full">
         <AppSidebar />
         <div className="flex flex-col flex-1 min-w-0">
-          <header className="flex items-center justify-between gap-4 px-4 py-3 border-b border-border bg-background sticky top-0 z-50">
+          <header className="flex items-center justify-between gap-4 px-4 py-3 glass sticky top-0 z-50">
             <div className="flex items-center gap-3">
               <SidebarTrigger data-testid="button-sidebar-toggle" />
               <div>

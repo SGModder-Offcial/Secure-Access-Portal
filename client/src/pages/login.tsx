@@ -37,7 +37,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-background">
+    <div className="min-h-screen flex flex-col">
       <header className="absolute top-4 right-4">
         <ThemeToggle />
       </header>
@@ -45,7 +45,7 @@ export default function LoginPage() {
       <main className="flex-1 flex items-center justify-center p-4">
         <div className="w-full max-w-md space-y-6">
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/10 mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl glass-card mb-4">
               <Shield className="w-8 h-8 text-primary" />
             </div>
             <h1 className="text-3xl font-bold tracking-tight">Secure Portal</h1>

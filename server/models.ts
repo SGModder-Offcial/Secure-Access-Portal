@@ -1,6 +1,6 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-export const ALL_FEATURES = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"] as const;
+export const ALL_FEATURES = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan", "ip"] as const;
 export type FeatureType = typeof ALL_FEATURES[number];
 
 export interface IUser extends Document {
@@ -29,7 +29,7 @@ const userSchema = new Schema<IUser>({
 export interface ISearchHistory extends Document {
   userId: string;
   userType: "admin" | "user";
-  searchType: "mobile" | "email" | "aadhar" | "pan" | "alt" | "vehicle_challan" | "vehicle_info";
+  searchType: "mobile" | "email" | "aadhar" | "pan" | "alt" | "vehicle_challan" | "vehicle_info" | "ip";
   searchQuery: string;
   resultCount: number;
   timestamp: Date;
@@ -38,7 +38,7 @@ export interface ISearchHistory extends Document {
 const searchHistorySchema = new Schema<ISearchHistory>({
   userId: { type: String, required: true },
   userType: { type: String, enum: ["admin", "user"], required: true },
-  searchType: { type: String, enum: ["mobile", "email", "aadhar", "pan", "alt", "vehicle_challan", "vehicle_info"], required: true },
+  searchType: { type: String, enum: ["mobile", "email", "aadhar", "pan", "alt", "vehicle_challan", "vehicle_info", "ip"], required: true },
   searchQuery: { type: String, required: true },
   resultCount: { type: Number, default: 0 },
   timestamp: { type: Date, default: Date.now },

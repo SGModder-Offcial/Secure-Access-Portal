@@ -24,7 +24,7 @@ export const searchHistorySchema = z.object({
   _id: z.string().optional(),
   userId: z.string(),
   userType: z.enum(["admin", "user"]),
-  searchType: z.enum(["mobile", "email", "id", "alt"]),
+  searchType: z.enum(["mobile", "email", "id", "alt", "aadhar", "pan", "vehicle_challan", "vehicle_info", "ip"]),
   searchQuery: z.string(),
   resultCount: z.number().default(0),
   timestamp: z.date().optional(),

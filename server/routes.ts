@@ -5,7 +5,7 @@ import MemoryStore from "memorystore";
 import bcrypt from "bcryptjs";
 import rateLimit from "express-rate-limit";
 import { connectDB } from "./db";
-import { User, SearchHistory } from "./models";
+import { User, SearchHistory, ALL_FEATURES } from "./models";
 import { requireAuth, requireAdmin, detectVPN, securityHeaders, preventInterception, apiProtection } from "./middleware";
 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "";
@@ -337,6 +337,86 @@ export async function registerRoutes(
     } catch (error) {
       console.error("Delete user error:", error);
       return res.status(500).json({ success: false, error: "Failed to delete user" });
+    }
+  });
+
+  app.get("/api/admin/users/:id/details", requireAdmin, detectVPN, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const user = await User.findById(id).select("-password");
+      if (!user) {
+        return res.status(404).json({ success: false, error: "User not found" });
+      }
+
+      const searchHistory = await SearchHistory.find({ userId: id }).sort({ timestamp: -1 });
+      
+      const searchStats = {
+        total: searchHistory.length,
+        mobile: searchHistory.filter(s => s.searchType === "mobile").length,
+        email: searchHistory.filter(s => s.searchType === "email").length,
+        aadhar: searchHistory.filter(s => s.searchType === "aadhar").length,
+        pan: searchHistory.filter(s => s.searchType === "pan").length,
+        vehicleInfo: searchHistory.filter(s => s.searchType === "vehicle_info").length,
+        vehicleChallan: searchHistory.filter(s => s.searchType === "vehicle_challan").length,
+      };
+
+      return res.json({
+        success: true,
+        user,
+        searchHistory,
+        searchStats,
+        allFeatures: ALL_FEATURES,
+      });
+    } catch (error) {
+      console.error("Get user details error:", error);
+      return res.status(500).json({ success: false, error: "Failed to fetch user details" });
+    }
+  });
+
+  app.put("/api/admin/users/:id/features", requireAdmin, detectVPN, async (req: Request, res: Response) => {
+    try {
+      const { id } = req.params;
+      const { features } = req.body;
+
+      if (!Array.isArray(features)) {
+        return res.status(400).json({ success: false, error: "Features must be an array" });
+      }
+
+      const validFeatures = features.filter(f => ALL_FEATURES.includes(f));
+
+      const user = await User.findByIdAndUpdate(
+        id,
+        { features: validFeatures },
+        { new: true }
+      ).select("-password");
+
+      if (!user) {
+        return res.status(404).json({ success: false, error: "User not found" });
+      }
+
+      return res.json({ success: true, user });
+    } catch (error) {
+      console.error("Update user features error:", error);
+      return res.status(500).json({ success: false, error: "Failed to update features" });
+    }
+  });
+
+  app.get("/api/user/features", requireAuth, async (req: Request, res: Response) => {
+    try {
+      const userId = req.session?.user?.id;
+      if (!userId || userId === "admin") {
+        return res.json({ success: true, features: ALL_FEATURES });
+      }
+
+      const user = await User.findById(userId).select("features");
+      if (!user) {
+        return res.json({ success: true, features: ALL_FEATURES });
+      }
+
+      return res.json({ success: true, features: user.features || ALL_FEATURES });
+    } catch (error) {
+      console.error("Get user features error:", error);
+      return res.json({ success: true, features: ALL_FEATURES });
     }
   });
 

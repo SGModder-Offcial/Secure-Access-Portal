@@ -1,5 +1,8 @@
 import mongoose, { Schema, Document } from "mongoose";
 
+export const ALL_FEATURES = ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"] as const;
+export type FeatureType = typeof ALL_FEATURES[number];
+
 export interface IUser extends Document {
   _id: string;
   username: string;
@@ -7,6 +10,7 @@ export interface IUser extends Document {
   name: string;
   email: string;
   status: "active" | "inactive";
+  features: FeatureType[];
   createdAt: Date;
   lastLogin?: Date;
 }
@@ -17,6 +21,7 @@ const userSchema = new Schema<IUser>({
   name: { type: String, required: true, minlength: 2 },
   email: { type: String, required: true, unique: true },
   status: { type: String, enum: ["active", "inactive"], default: "active" },
+  features: { type: [String], default: ["mobile", "email", "aadhar", "pan", "vehicle-info", "vehicle-challan"] },
   createdAt: { type: Date, default: Date.now },
   lastLogin: { type: Date },
 });

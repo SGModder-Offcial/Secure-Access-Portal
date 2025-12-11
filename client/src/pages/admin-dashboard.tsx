@@ -44,7 +44,9 @@ import {
   Fuel,
   Building,
   CircleDollarSign,
+  Eye,
 } from "lucide-react";
+import { Link } from "wouter";
 
 interface SearchResultItem {
   address?: string;
@@ -959,6 +961,15 @@ export function UserManagement() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
+                          <Link href={`/admin/users/${user._id}`}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              data-testid={`button-view-user-${user._id}`}
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Link>
                           <Button
                             variant="ghost"
                             size="icon"
